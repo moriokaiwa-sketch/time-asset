@@ -44,7 +44,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-100">
       {/* Header Area */}
-      <header className="px-6 pt-12 pb-6 bg-white shrink-0 z-10 shadow-sm relative">
+      <header className="sticky top-0 px-6 pt-12 pb-6 bg-white/90 backdrop-blur-xl shrink-0 z-50 shadow-sm border-b border-slate-100/50">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
