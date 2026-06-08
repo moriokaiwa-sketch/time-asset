@@ -8,10 +8,11 @@ import { AddBlockModal } from "@/components/AddBlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
 
 export default function Home() {
-  const { blocks, shiftConfig, isLoaded, addBlock, setShiftConfig } = useTimeBlocks();
+  const { blocks, shiftConfig, isLoaded, addBlock, updateBlock, setShiftConfig } = useTimeBlocks();
   
   const [activeTab, setActiveTab] = useState<"plan" | "actual">("plan");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [initialOffset, setInitialOffset] = useState<number | undefined>(undefined);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   if (!isLoaded) {
@@ -21,10 +22,20 @@ export default function Home() {
   // Calculate shift end hour for display
   const endHour = (shiftConfig.startHour + shiftConfig.duration) % 24;
 
+  const handleAddBlockRequest = (offset: number) => {
+    setInitialOffset(offset);
+    setIsAddModalOpen(true);
+  };
+
+  const closeAddModal = () => {
+    setIsAddModalOpen(false);
+    setInitialOffset(undefined);
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-100">
       {/* Header Area */}
-      <header className="px-6 pt-12 pb-6 bg-white shrink-0">
+      <header className="px-6 pt-12 pb-6 bg-white shrink-0 z-10 shadow-sm relative">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
@@ -71,13 +82,15 @@ export default function Home() {
           duration={shiftConfig.duration} 
           events={blocks}
           activeTab={activeTab}
+          onUpdateBlock={updateBlock}
+          onAddBlockRequest={handleAddBlockRequest}
         />
       </div>
 
       {/* Floating Action Button for adding time blocks */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30">
         <button 
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => { setInitialOffset(undefined); setIsAddModalOpen(true); }}
           className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-full font-bold shadow-lg shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all"
         >
           <Clock className="w-5 h-5" />
@@ -88,8 +101,9 @@ export default function Home() {
       {/* Modals */}
       <AddBlockModal 
         isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+        onClose={closeAddModal} 
         shiftConfig={shiftConfig}
+        initialStartOffset={initialOffset}
         onAdd={addBlock}
       />
       <SettingsModal 

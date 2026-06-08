@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { ShiftConfig, TimeBlockType } from "@/hooks/useTimeBlocks";
 
@@ -8,16 +8,30 @@ interface AddBlockModalProps {
   isOpen: boolean;
   onClose: () => void;
   shiftConfig: ShiftConfig;
+  initialStartOffset?: number;
   onAdd: (block: { title: string; startOffset: number; duration: number; type: TimeBlockType }) => void;
 }
 
-export function AddBlockModal({ isOpen, onClose, shiftConfig, onAdd }: AddBlockModalProps) {
+export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, onAdd }: AddBlockModalProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
   const [startHourInput, setStartHourInput] = useState(shiftConfig.startHour);
   const [startMinuteInput, setStartMinuteInput] = useState(0);
   const [durationHours, setDurationHours] = useState(1);
   const [durationMinutes, setDurationMinutes] = useState(0);
+
+  useEffect(() => {
+    if (isOpen && initialStartOffset !== undefined) {
+      const totalMins = initialStartOffset;
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      setStartHourInput((shiftConfig.startHour + h) % 24);
+      setStartMinuteInput(m);
+    } else if (isOpen) {
+      setStartHourInput(shiftConfig.startHour);
+      setStartMinuteInput(0);
+    }
+  }, [isOpen, initialStartOffset, shiftConfig.startHour]);
 
   if (!isOpen) return null;
 
@@ -26,7 +40,6 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, onAdd }: AddBlockM
     if (!title) return;
 
     // Calculate startOffset
-    // We need to find how many minutes `startHourInput` is after `shiftConfig.startHour`.
     let hourDiff = startHourInput - shiftConfig.startHour;
     if (hourDiff < 0) {
       hourDiff += 24;
