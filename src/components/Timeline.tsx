@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { TimeBlock, Category } from "@/hooks/useTimeBlocks";
+import { TimeBlock, Category } from "@/types";
 
 interface TimelineProps {
   startHour: number; // 0-23

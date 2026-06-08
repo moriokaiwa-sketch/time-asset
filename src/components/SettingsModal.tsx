@@ -2,39 +2,34 @@
 
 import React, { useState } from "react";
 import { X, Trash2, Plus } from "lucide-react";
-import { ShiftConfig, Category } from "@/hooks/useTimeBlocks";
+import { Category, ShiftType } from "@/types";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentConfig: ShiftConfig;
-  onSave: (config: ShiftConfig) => void;
   categories: Category[];
   onAddCategory: (category: Omit<Category, "id">) => void;
   onUpdateCategory: (id: string, updates: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
+  shiftTypes: ShiftType[];
+  onAddShiftType: (shiftType: Omit<ShiftType, "id">) => void;
+  onUpdateShiftType: (id: string, updates: Partial<ShiftType>) => void;
+  onDeleteShiftType: (id: string) => void;
 }
 
 export function SettingsModal({ 
   isOpen, 
   onClose, 
-  currentConfig, 
-  onSave,
   categories,
   onAddCategory,
   onUpdateCategory,
-  onDeleteCategory
+  onDeleteCategory,
+  shiftTypes,
+  onAddShiftType,
+  onUpdateShiftType,
+  onDeleteShiftType
 }: SettingsModalProps) {
-  const [startHour, setStartHour] = useState(currentConfig.startHour);
-  const [duration, setDuration] = useState(currentConfig.duration);
-
   if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({ startHour, duration });
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-slate-900/40 backdrop-blur-sm">
@@ -53,48 +48,69 @@ export function SettingsModal({
         </div>
 
         <div className="overflow-y-auto p-6">
-          <form id="settings-form" onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-8">
             
             {/* Shift Settings */}
-            <div className="space-y-6">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">シフト設定</h3>
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">シフト種別</h3>
               
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700">
-                  1日の開始時間
-                </label>
-                <div className="flex items-center gap-2">
-                  <select 
-                    value={startHour} 
-                    onChange={(e) => setStartHour(Number(e.target.value))}
-                    className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  >
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <option key={i} value={i}>
-                        {i.toString().padStart(2, '0')}:00
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  夜勤の方は21:00開始、日勤の方は08:00開始のように設定します。
-                </p>
+              <div className="space-y-3">
+                {shiftTypes.map(shift => (
+                  <div key={shift.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="text"
+                        value={shift.name}
+                        onChange={(e) => onUpdateShiftType(shift.id, { name: e.target.value })}
+                        className="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="シフト名"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => onDeleteShiftType(shift.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="block text-xs font-bold text-slate-500 mb-1">開始時間</label>
+                        <select 
+                          value={shift.startHour}
+                          onChange={(e) => onUpdateShiftType(shift.id, { startHour: Number(e.target.value) })}
+                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs font-bold text-slate-500 mb-1">表示長さ</label>
+                        <select 
+                          value={shift.duration}
+                          onChange={(e) => onUpdateShiftType(shift.id, { duration: Number(e.target.value) })}
+                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value={12}>12時間</option>
+                          <option value={24}>24時間</option>
+                          <option value={48}>48時間</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700">
-                  表示する長さ（時間）
-                </label>
-                <select 
-                  value={duration} 
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value={12}>12時間</option>
-                  <option value={24}>24時間</option>
-                  <option value={48}>48時間</option>
-                </select>
-              </div>
+              <button 
+                type="button"
+                onClick={() => onAddShiftType({ name: "新規シフト", color: "bg-slate-100 text-slate-700 border-slate-200", startHour: 9, duration: 24 })}
+                className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4" />
+                シフト種別を追加
+              </button>
             </div>
 
             {/* Category Settings */}
@@ -139,16 +155,15 @@ export function SettingsModal({
               </button>
             </div>
 
-          </form>
+          </div>
         </div>
 
         <div className="p-6 border-t border-slate-100 shrink-0">
           <button
-            form="settings-form"
-            type="submit"
+            onClick={onClose}
             className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold tracking-wider hover:bg-slate-800 transition-colors active:scale-[0.98]"
           >
-            SAVE
+            閉じる
           </button>
         </div>
 

@@ -1,28 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { Timeline } from "@/components/Timeline";
-import { Clock, Calendar, Settings, Rows4, ZoomIn, LogIn, LogOut } from "lucide-react";
-import { useTimeBlocks, TimeBlock } from "@/hooks/useTimeBlocks";
+import { Clock, Calendar as CalendarIcon, Settings, Rows4, ZoomIn, LogIn, LogOut, CalendarDays } from "lucide-react";
+import { useTimeBlocks } from "@/hooks/useTimeBlocks";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
+import { TimeBlock, ShiftConfig } from "@/types";
 import { BlockModal } from "@/components/BlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams, useRouter } from "next/navigation";
+import { format, parseISO } from "date-fns";
+import { ja } from "date-fns/locale";
 
-export default function Home() {
+function HomeContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
+  const dateStr = dateParam || new Date().toISOString().split('T')[0];
+  
   const { user, loading, signIn, signOut } = useAuth();
   const { 
+    categories, 
+    shiftTypes, 
+    isLoaded: globalLoaded,
+    addCategory,
+    updateCategory,
+    removeCategory,
+    addShiftType,
+    updateShiftType,
+    removeShiftType
+  } = useGlobalSettings();
+
+  const { 
     blocks, 
-    categories,
-    shiftConfig, 
-    isLoaded, 
+    shiftTypeId,
+    isLoaded: blocksLoaded, 
     addBlock, 
     updateBlock, 
     removeBlock, 
-    setShiftConfig,
-    addCategory,
-    updateCategory,
-    removeCategory
-  } = useTimeBlocks();
+    setShiftTypeId
+  } = useTimeBlocks(dateStr);
   
   const [activeTab, setActiveTab] = useState<"plan" | "actual">("plan");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -31,12 +49,21 @@ export default function Home() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isOverviewMode, setIsOverviewMode] = useState(false);
 
-  if (!isLoaded) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>;
+  if (!globalLoaded || !blocksLoaded) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold text-slate-400">Loading Data...</div>;
   }
 
-  // Calculate shift end hour for display
+  // Find current shift config
+  const currentShiftType = shiftTypes.find(s => s.id === shiftTypeId) || shiftTypes[0];
+  const shiftConfig: ShiftConfig = { 
+    startHour: currentShiftType.startHour, 
+    duration: currentShiftType.duration 
+  };
+
   const endHour = (shiftConfig.startHour + shiftConfig.duration) % 24;
+  
+  // Format display date
+  const displayDate = format(parseISO(dateStr), "yyyy年M月d日(E)", { locale: ja });
 
   const handleAddBlockRequest = (offset: number) => {
     setEditingBlock(null);
@@ -58,19 +85,30 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-100">
-      {/* Header Area */}
       <header className="sticky top-0 px-5 pt-6 pb-4 bg-white/90 backdrop-blur-xl shrink-0 z-50 shadow-sm border-b border-slate-100/50">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Time Asset
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+                Time Asset
+              </h1>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
+                {displayDate}
+              </span>
+            </div>
             <p className="text-sm font-medium text-slate-400 mt-1 flex items-center gap-1.5">
-              <Calendar className="w-4 h-4" />
-              Today's Shift: {shiftConfig.startHour.toString().padStart(2, '0')}:00 - {endHour.toString().padStart(2, '0')}:00
+              <Clock className="w-4 h-4" />
+              {currentShiftType.name}: {shiftConfig.startHour.toString().padStart(2, '0')}:00 - {endHour.toString().padStart(2, '0')}:00
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => router.push('/calendar')}
+              className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center gap-1.5 px-4 font-bold text-sm"
+            >
+              <CalendarDays className="w-5 h-5" />
+              <span className="hidden sm:inline">カレンダー</span>
+            </button>
             {!loading && (
               <button 
                 onClick={user ? signOut : signIn}
@@ -160,13 +198,23 @@ export default function Home() {
       <SettingsModal 
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
-        currentConfig={shiftConfig}
-        onSave={setShiftConfig}
+        shiftTypes={shiftTypes}
+        onAddShiftType={addShiftType}
+        onUpdateShiftType={updateShiftType}
+        onDeleteShiftType={removeShiftType}
         categories={categories}
         onAddCategory={addCategory}
         onUpdateCategory={updateCategory}
         onDeleteCategory={removeCategory}
       />
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold text-slate-400">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

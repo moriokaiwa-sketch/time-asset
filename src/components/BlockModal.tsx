@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Trash2, Clock, Copy } from "lucide-react";
-import { ShiftConfig, TimeBlockType, TimeBlock, Category } from "@/hooks/useTimeBlocks";
+import { TimeBlock, ShiftConfig, Category, TimeBlockType } from "@/types";
 
 interface BlockModalProps {
   isOpen: boolean;
