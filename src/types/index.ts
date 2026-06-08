@@ -45,8 +45,10 @@ export interface GlobalSettings {
 }
 
 export const DEFAULT_SHIFT_TYPES: ShiftType[] = [
-  { id: "day", name: "日勤", color: "bg-orange-100 text-orange-700 border-orange-200", startHour: 9, duration: 9 }, // 9:00 - 18:00
+  { id: "day", name: "日勤", color: "bg-orange-100 text-orange-700 border-orange-200", startHour: 9, duration: 12 }, // 9:00 - 21:00 (12h表示)
+  { id: "late", name: "遅番", color: "bg-yellow-100 text-yellow-700 border-yellow-200", startHour: 12, duration: 12 }, // 12:00 - 24:00
   { id: "night", name: "夜勤", color: "bg-indigo-100 text-indigo-700 border-indigo-200", startHour: 21, duration: 12 }, // 21:00 - 9:00
+  { id: "post-night", name: "明け", color: "bg-teal-100 text-teal-700 border-teal-200", startHour: 9, duration: 24 }, // 9:00 - 9:00
   { id: "off", name: "休", color: "bg-slate-100 text-slate-700 border-slate-200", startHour: 9, duration: 24 }, // 9:00 - 9:00
 ];
 

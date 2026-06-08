@@ -21,7 +21,14 @@ export function useGlobalSettings() {
         if (storedCategories) setCategories(JSON.parse(storedCategories));
 
         const storedShiftTypes = localStorage.getItem(STORAGE_KEY_SHIFTTYPES);
-        if (storedShiftTypes) setShiftTypes(JSON.parse(storedShiftTypes));
+        if (storedShiftTypes) {
+          let parsed = JSON.parse(storedShiftTypes);
+          if (parsed.length === 3 && !parsed.some((s: any) => s.id === "late")) {
+            parsed = DEFAULT_SHIFT_TYPES;
+            localStorage.setItem(STORAGE_KEY_SHIFTTYPES, JSON.stringify(parsed));
+          }
+          setShiftTypes(parsed);
+        }
       } catch (e) {
         console.error("Failed to load global settings from localStorage", e);
       } finally {
@@ -38,7 +45,15 @@ export function useGlobalSettings() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setCategories(data.categories || DEFAULT_CATEGORIES);
-        setShiftTypes(data.shiftTypes || DEFAULT_SHIFT_TYPES);
+        
+        let loadedShiftTypes = data.shiftTypes || DEFAULT_SHIFT_TYPES;
+        // Migration to 5 defaults
+        if (loadedShiftTypes.length === 3 && !loadedShiftTypes.some((s: any) => s.id === "late")) {
+          loadedShiftTypes = DEFAULT_SHIFT_TYPES;
+          setDoc(docRef, { shiftTypes: loadedShiftTypes }, { merge: true });
+        }
+        
+        setShiftTypes(loadedShiftTypes);
         setIsLoaded(true);
       } else {
         // Migration of global settings to Firestore
@@ -49,7 +64,12 @@ export function useGlobalSettings() {
 
           let localShiftTypes = DEFAULT_SHIFT_TYPES;
           const storedShiftTypes = localStorage.getItem(STORAGE_KEY_SHIFTTYPES);
-          if (storedShiftTypes) localShiftTypes = JSON.parse(storedShiftTypes);
+          if (storedShiftTypes) {
+            localShiftTypes = JSON.parse(storedShiftTypes);
+            if (localShiftTypes.length === 3 && !localShiftTypes.some((s: any) => s.id === "late")) {
+              localShiftTypes = DEFAULT_SHIFT_TYPES;
+            }
+          }
 
           // We use merge: true so we don't overwrite daily data if it happens to exist
           await setDoc(docRef, {
