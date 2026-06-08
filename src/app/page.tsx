@@ -93,18 +93,16 @@ function HomeContent() {
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-100">
       <header className="sticky top-0 px-5 pt-6 pb-4 bg-white/90 backdrop-blur-xl shrink-0 z-50 shadow-sm border-b border-slate-100/50">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-                Time Asset
-              </h1>
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">
-                {displayDate}
-              </span>
-            </div>
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 truncate">
+              Time Asset
+            </h1>
+            <p className="text-sm font-bold text-slate-500 mt-1 whitespace-nowrap">
+              {displayDate}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button 
               onClick={() => router.push('/calendar')}
               className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center gap-1.5 px-4 font-bold text-sm"
