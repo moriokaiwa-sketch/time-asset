@@ -1,18 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
-import { ShiftConfig, TimeBlockType } from "@/hooks/useTimeBlocks";
+import { X, Trash2 } from "lucide-react";
+import { ShiftConfig, TimeBlockType, TimeBlock } from "@/hooks/useTimeBlocks";
 
-interface AddBlockModalProps {
+interface BlockModalProps {
   isOpen: boolean;
   onClose: () => void;
   shiftConfig: ShiftConfig;
   initialStartOffset?: number;
-  onAdd: (block: { title: string; startOffset: number; duration: number; type: TimeBlockType }) => void;
+  editingBlock?: TimeBlock | null;
+  onAdd: (block: Omit<TimeBlock, "id" | "column" | "totalColumns">) => void;
+  onUpdate?: (id: string, updates: Partial<TimeBlock>) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, onAdd }: AddBlockModalProps) {
+export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, editingBlock, onAdd, onUpdate, onDelete }: BlockModalProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
   const [startHourInput, setStartHourInput] = useState(shiftConfig.startHour);
@@ -21,17 +24,39 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
   const [durationMinutes, setDurationMinutes] = useState(0);
 
   useEffect(() => {
-    if (isOpen && initialStartOffset !== undefined) {
+    if (!isOpen) return;
+
+    if (editingBlock) {
+      setTitle(editingBlock.title);
+      setType(editingBlock.type);
+      
+      const totalStartMins = editingBlock.startOffset;
+      const h = Math.floor(totalStartMins / 60);
+      const m = totalStartMins % 60;
+      setStartHourInput((shiftConfig.startHour + h) % 24);
+      setStartMinuteInput(m);
+
+      setDurationHours(Math.floor(editingBlock.duration / 60));
+      setDurationMinutes(editingBlock.duration % 60);
+    } else if (initialStartOffset !== undefined) {
       const totalMins = initialStartOffset;
       const h = Math.floor(totalMins / 60);
       const m = totalMins % 60;
       setStartHourInput((shiftConfig.startHour + h) % 24);
       setStartMinuteInput(m);
-    } else if (isOpen) {
+      setTitle("");
+      setType("plan");
+      setDurationHours(1);
+      setDurationMinutes(0);
+    } else {
       setStartHourInput(shiftConfig.startHour);
       setStartMinuteInput(0);
+      setTitle("");
+      setType("plan");
+      setDurationHours(1);
+      setDurationMinutes(0);
     }
-  }, [isOpen, initialStartOffset, shiftConfig.startHour]);
+  }, [isOpen, initialStartOffset, shiftConfig.startHour, editingBlock]);
 
   if (!isOpen) return null;
 
@@ -47,19 +72,33 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
     const startOffset = hourDiff * 60 + startMinuteInput;
     const duration = durationHours * 60 + durationMinutes;
 
-    onAdd({
-      title,
-      startOffset,
-      duration,
-      type,
-    });
+    if (editingBlock && onUpdate) {
+      onUpdate(editingBlock.id, {
+        title,
+        startOffset,
+        duration,
+        type,
+      });
+    } else {
+      onAdd({
+        title,
+        startOffset,
+        duration,
+        type,
+      });
+    }
     
-    // Reset and close
-    setTitle("");
-    setDurationHours(1);
-    setDurationMinutes(0);
     onClose();
   };
+
+  const handleDelete = () => {
+    if (editingBlock && onDelete) {
+      onDelete(editingBlock.id);
+      onClose();
+    }
+  };
+
+  const isEditing = !!editingBlock;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-slate-900/40 backdrop-blur-sm">
@@ -68,7 +107,9 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-900">ブロックを追加</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            {isEditing ? "ブロックを編集" : "ブロックを追加"}
+          </h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
@@ -132,7 +173,7 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
                 onChange={(e) => setStartMinuteInput(Number(e.target.value))}
                 className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
-                {[0, 15, 30, 45].map((m) => (
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
                   <option key={m} value={m}>{m.toString().padStart(2, '0')}分</option>
                 ))}
               </select>
@@ -157,19 +198,28 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
                 onChange={(e) => setDurationMinutes(Number(e.target.value))}
                 className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
-                {[0, 15, 30, 45].map((m) => (
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
                   <option key={m} value={m}>{m}分</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 flex gap-3">
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="p-3.5 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors active:scale-[0.98] shrink-0"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
             <button
               type="submit"
-              className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors active:scale-[0.98]"
+              className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors active:scale-[0.98]"
             >
-              追加する
+              {isEditing ? "保存する" : "追加する"}
             </button>
           </div>
         </form>

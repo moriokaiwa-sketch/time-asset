@@ -11,9 +11,10 @@ interface TimelineProps {
   activeTab: "plan" | "actual";
   onUpdateBlock?: (id: string, updates: Partial<TimeBlock>) => void;
   onAddBlockRequest?: (startOffset: number) => void;
+  onBlockClick?: (block: TimeBlock) => void;
 }
 
-export function Timeline({ startHour, duration, events = [], activeTab, onUpdateBlock, onAddBlockRequest }: TimelineProps) {
+export function Timeline({ startHour, duration, events = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Drag State
@@ -57,6 +58,15 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
           onUpdateBlock(draggedBlockId, { startOffset: newOffset });
         }
       }
+      
+      // If we didn't drag at all, treat it as a click
+      if (draggedBlockId && dragDeltaMinutes === 0 && onBlockClick) {
+        const clickedEvent = events.find(e => e.id === draggedBlockId);
+        if (clickedEvent) {
+          onBlockClick(clickedEvent);
+        }
+      }
+
       setDraggedBlockId(null);
       setDragDeltaMinutes(0);
       window.removeEventListener("pointermove", handlePointerMove);
@@ -69,7 +79,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [draggedBlockId, dragDeltaMinutes, duration, onUpdateBlock]);
+  }, [draggedBlockId, dragDeltaMinutes, duration, onUpdateBlock, onBlockClick, events]);
 
   // Handle Background Long Press
   const handleBgPointerDown = (e: React.PointerEvent) => {

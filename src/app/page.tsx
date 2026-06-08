@@ -3,16 +3,17 @@
 import React, { useState } from "react";
 import { Timeline } from "@/components/Timeline";
 import { Clock, Calendar, Settings } from "lucide-react";
-import { useTimeBlocks } from "@/hooks/useTimeBlocks";
-import { AddBlockModal } from "@/components/AddBlockModal";
+import { useTimeBlocks, TimeBlock } from "@/hooks/useTimeBlocks";
+import { BlockModal } from "@/components/BlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
 
 export default function Home() {
-  const { blocks, shiftConfig, isLoaded, addBlock, updateBlock, setShiftConfig } = useTimeBlocks();
+  const { blocks, shiftConfig, isLoaded, addBlock, updateBlock, removeBlock, setShiftConfig } = useTimeBlocks();
   
   const [activeTab, setActiveTab] = useState<"plan" | "actual">("plan");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [initialOffset, setInitialOffset] = useState<number | undefined>(undefined);
+  const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   if (!isLoaded) {
@@ -23,13 +24,21 @@ export default function Home() {
   const endHour = (shiftConfig.startHour + shiftConfig.duration) % 24;
 
   const handleAddBlockRequest = (offset: number) => {
+    setEditingBlock(null);
     setInitialOffset(offset);
     setIsAddModalOpen(true);
   };
 
-  const closeAddModal = () => {
+  const handleBlockClick = (block: TimeBlock) => {
+    setEditingBlock(block);
+    setInitialOffset(undefined);
+    setIsAddModalOpen(true);
+  };
+
+  const closeBlockModal = () => {
     setIsAddModalOpen(false);
     setInitialOffset(undefined);
+    setEditingBlock(null);
   };
 
   return (
@@ -84,13 +93,14 @@ export default function Home() {
           activeTab={activeTab}
           onUpdateBlock={updateBlock}
           onAddBlockRequest={handleAddBlockRequest}
+          onBlockClick={handleBlockClick}
         />
       </div>
 
       {/* Floating Action Button for adding time blocks */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30">
         <button 
-          onClick={() => { setInitialOffset(undefined); setIsAddModalOpen(true); }}
+          onClick={() => { setEditingBlock(null); setInitialOffset(undefined); setIsAddModalOpen(true); }}
           className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-full font-bold shadow-lg shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all"
         >
           <Clock className="w-5 h-5" />
@@ -99,12 +109,15 @@ export default function Home() {
       </div>
 
       {/* Modals */}
-      <AddBlockModal 
+      <BlockModal 
         isOpen={isAddModalOpen} 
-        onClose={closeAddModal} 
+        onClose={closeBlockModal} 
         shiftConfig={shiftConfig}
         initialStartOffset={initialOffset}
+        editingBlock={editingBlock}
         onAdd={addBlock}
+        onUpdate={updateBlock}
+        onDelete={removeBlock}
       />
       <SettingsModal 
         isOpen={isSettingsModalOpen}
