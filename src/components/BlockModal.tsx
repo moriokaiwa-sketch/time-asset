@@ -67,7 +67,6 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title) return;
 
     // Calculate startOffset
     let hourDiff = startHourInput - shiftConfig.startHour;
@@ -167,7 +166,6 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
             <div className="space-y-2">
               <label className="block text-sm font-bold text-slate-700">詳細</label>
               <input 
-                required
                 type="text" 
                 placeholder="例: 会議、睡眠、休憩など"
                 value={title}
