@@ -148,31 +148,55 @@ export function SettingsModal({
                           onChange={(e) => onUpdateShiftType(shift.id, { startHour: Number(e.target.value) })}
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
-                          {Array.from({ length: 48 }).map((_, i) => (
+                          {Array.from({ length: 24 }).map((_, i) => (
                             <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
                           ))}
                         </select>
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">当日の就寝時刻</label>
-                        <select 
-                          value={(() => {
-                            let val = shift.startHour + shift.duration - 24;
-                            if (val < 0) val += 24;
-                            return val > 47 ? val % 24 : val;
-                          })()}
-                          onChange={(e) => {
-                            const endHour = Number(e.target.value);
-                            let newDuration = endHour - shift.startHour + 24;
-                            if (newDuration <= 0) newDuration += 24;
-                            onUpdateShiftType(shift.id, { duration: newDuration });
-                          }}
-                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
-                        >
-                          {Array.from({ length: 48 }).map((_, i) => (
-                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
-                          ))}
-                        </select>
+                        <div className="flex gap-1">
+                          <select 
+                            value={(() => {
+                              let val = shift.startHour + shift.duration;
+                              return Math.floor(val / 24) * 24;
+                            })()}
+                            onChange={(e) => {
+                              const newOffset = Number(e.target.value);
+                              const currentAbs = shift.startHour + shift.duration;
+                              const currentDisplay = currentAbs % 24;
+                              const newAbs = newOffset + currentDisplay;
+                              let newDuration = newAbs - shift.startHour;
+                              if (newDuration <= 0) newDuration += 24;
+                              onUpdateShiftType(shift.id, { duration: newDuration });
+                            }}
+                            className="w-[45%] p-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value={0}>当日</option>
+                            <option value={24}>翌日</option>
+                            <option value={48}>翌々日</option>
+                          </select>
+                          <select 
+                            value={(() => {
+                              let val = shift.startHour + shift.duration;
+                              return val % 24;
+                            })()}
+                            onChange={(e) => {
+                              const newDisplay = Number(e.target.value);
+                              const currentAbs = shift.startHour + shift.duration;
+                              const currentOffset = Math.floor(currentAbs / 24) * 24;
+                              const newAbs = currentOffset + newDisplay;
+                              let newDuration = newAbs - shift.startHour;
+                              if (newDuration <= 0) newDuration += 24;
+                              onUpdateShiftType(shift.id, { duration: newDuration });
+                            }}
+                            className="w-[55%] p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 24 }).map((_, i) => (
+                              <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                     
@@ -182,24 +206,48 @@ export function SettingsModal({
                         <label className="block text-xs font-bold text-slate-500 mb-1">勤務開始</label>
                         <div className="flex gap-1">
                           <select
-                            value={shift.workStartTime ? shift.workStartTime.split(':')[0] : (shift.workStartHour != null ? shift.workStartHour.toString().padStart(2, '0') : shift.startHour.toString().padStart(2, '0'))}
+                            value={(() => {
+                              const ws = shift.workStartTime ? shift.workStartTime.split(':')[0] : (shift.workStartHour != null ? shift.workStartHour.toString() : shift.startHour.toString());
+                              return Math.floor(Number(ws) / 24) * 24;
+                            })()}
                             onChange={(e) => {
-                              const m = shift.workStartTime ? shift.workStartTime.split(':')[1] : '00';
-                              onUpdateShiftType(shift.id, { workStartTime: `${e.target.value.padStart(2, '0')}:${m}` });
+                              const newOffset = Number(e.target.value);
+                              const ws = shift.workStartTime ? shift.workStartTime.split(':') : [shift.workStartHour != null ? shift.workStartHour.toString() : shift.startHour.toString(), '00'];
+                              const currentDisplay = Number(ws[0]) % 24;
+                              const newAbs = newOffset + currentDisplay;
+                              onUpdateShiftType(shift.id, { workStartTime: `${newAbs.toString().padStart(2, '0')}:${ws[1].padStart(2, '0')}` });
                             }}
-                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-[40%] p-1.5 bg-slate-100 border-none rounded-lg text-[11px] font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
-                            {Array.from({ length: 48 }).map((_, i) => (
+                            <option value={0}>当日</option>
+                            <option value={24}>翌日</option>
+                            <option value={48}>翌々日</option>
+                          </select>
+                          <select
+                            value={(() => {
+                              const ws = shift.workStartTime ? shift.workStartTime.split(':')[0] : (shift.workStartHour != null ? shift.workStartHour.toString() : shift.startHour.toString());
+                              return (Number(ws) % 24).toString().padStart(2, '0');
+                            })()}
+                            onChange={(e) => {
+                              const newDisplay = Number(e.target.value);
+                              const ws = shift.workStartTime ? shift.workStartTime.split(':') : [shift.workStartHour != null ? shift.workStartHour.toString() : shift.startHour.toString(), '00'];
+                              const currentOffset = Math.floor(Number(ws[0]) / 24) * 24;
+                              const newAbs = currentOffset + newDisplay;
+                              onUpdateShiftType(shift.id, { workStartTime: `${newAbs.toString().padStart(2, '0')}:${ws[1].padStart(2, '0')}` });
+                            }}
+                            className="w-[30%] p-1.5 bg-slate-100 border-none rounded-lg text-[11px] font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 24 }).map((_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}時</option>
                             ))}
                           </select>
                           <select
                             value={shift.workStartTime ? shift.workStartTime.split(':')[1] : '00'}
                             onChange={(e) => {
-                              const h = shift.workStartTime ? shift.workStartTime.split(':')[0] : (shift.workStartHour != null ? shift.workStartHour.toString().padStart(2, '0') : shift.startHour.toString().padStart(2, '0'));
-                              onUpdateShiftType(shift.id, { workStartTime: `${h}:${e.target.value.padStart(2, '0')}` });
+                              const ws = shift.workStartTime ? shift.workStartTime.split(':') : [shift.workStartHour != null ? shift.workStartHour.toString() : shift.startHour.toString(), '00'];
+                              onUpdateShiftType(shift.id, { workStartTime: `${ws[0].padStart(2, '0')}:${e.target.value.padStart(2, '0')}` });
                             }}
-                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-[30%] p-1.5 bg-slate-100 border-none rounded-lg text-[11px] font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
                             {Array.from({ length: 60 }).map((_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
@@ -211,34 +259,48 @@ export function SettingsModal({
                         <label className="block text-xs font-bold text-slate-500 mb-1">勤務終了</label>
                         <div className="flex gap-1">
                           <select
-                            value={shift.workEndTime ? shift.workEndTime.split(':')[0] : (() => {
-                              let defaultH = shift.workEndHour != null ? shift.workEndHour : (shift.startHour + shift.duration - 24);
-                              if (defaultH < 0) defaultH += 24;
-                              const displayH = defaultH > 47 ? defaultH % 24 : defaultH;
-                              return displayH.toString().padStart(2, '0');
+                            value={(() => {
+                              const we = shift.workEndTime ? shift.workEndTime.split(':')[0] : (shift.workEndHour != null ? shift.workEndHour.toString() : (shift.startHour + shift.duration).toString());
+                              return Math.floor(Number(we) / 24) * 24;
                             })()}
                             onChange={(e) => {
-                              const m = shift.workEndTime ? shift.workEndTime.split(':')[1] : '00';
-                              onUpdateShiftType(shift.id, { workEndTime: `${e.target.value.padStart(2, '0')}:${m}` });
+                              const newOffset = Number(e.target.value);
+                              const we = shift.workEndTime ? shift.workEndTime.split(':') : [shift.workEndHour != null ? shift.workEndHour.toString() : (shift.startHour + shift.duration).toString(), '00'];
+                              const currentDisplay = Number(we[0]) % 24;
+                              const newAbs = newOffset + currentDisplay;
+                              onUpdateShiftType(shift.id, { workEndTime: `${newAbs.toString().padStart(2, '0')}:${we[1].padStart(2, '0')}` });
                             }}
-                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-[40%] p-1.5 bg-slate-100 border-none rounded-lg text-[11px] font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
-                            {Array.from({ length: 48 }).map((_, i) => (
+                            <option value={0}>当日</option>
+                            <option value={24}>翌日</option>
+                            <option value={48}>翌々日</option>
+                          </select>
+                          <select
+                            value={(() => {
+                              const we = shift.workEndTime ? shift.workEndTime.split(':')[0] : (shift.workEndHour != null ? shift.workEndHour.toString() : (shift.startHour + shift.duration).toString());
+                              return (Number(we) % 24).toString().padStart(2, '0');
+                            })()}
+                            onChange={(e) => {
+                              const newDisplay = Number(e.target.value);
+                              const we = shift.workEndTime ? shift.workEndTime.split(':') : [shift.workEndHour != null ? shift.workEndHour.toString() : (shift.startHour + shift.duration).toString(), '00'];
+                              const currentOffset = Math.floor(Number(we[0]) / 24) * 24;
+                              const newAbs = currentOffset + newDisplay;
+                              onUpdateShiftType(shift.id, { workEndTime: `${newAbs.toString().padStart(2, '0')}:${we[1].padStart(2, '0')}` });
+                            }}
+                            className="w-[30%] p-1.5 bg-slate-100 border-none rounded-lg text-[11px] font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 24 }).map((_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}時</option>
                             ))}
                           </select>
                           <select
                             value={shift.workEndTime ? shift.workEndTime.split(':')[1] : '00'}
                             onChange={(e) => {
-                              const h = shift.workEndTime ? shift.workEndTime.split(':')[0] : (() => {
-                                let defaultH = shift.workEndHour != null ? shift.workEndHour : (shift.startHour + shift.duration - 24);
-                                if (defaultH < 0) defaultH += 24;
-                                const displayH = defaultH > 47 ? defaultH % 24 : defaultH;
-                                return displayH.toString().padStart(2, '0');
-                              })();
-                              onUpdateShiftType(shift.id, { workEndTime: `${h}:${e.target.value.padStart(2, '0')}` });
+                              const we = shift.workEndTime ? shift.workEndTime.split(':') : [shift.workEndHour != null ? shift.workEndHour.toString() : (shift.startHour + shift.duration).toString(), '00'];
+                              onUpdateShiftType(shift.id, { workEndTime: `${we[0].padStart(2, '0')}:${e.target.value.padStart(2, '0')}` });
                             }}
-                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-[30%] p-1.5 bg-slate-100 border-none rounded-lg text-[11px] font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                           >
                             {Array.from({ length: 60 }).map((_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>

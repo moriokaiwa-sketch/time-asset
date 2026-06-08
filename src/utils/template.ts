@@ -89,14 +89,10 @@ export async function getTemplateBlocks(userId: string | null, shiftType: ShiftT
     const [startH, startM] = shiftType.workStartTime.split(':').map(Number);
     const [endH, endM] = shiftType.workEndTime.split(':').map(Number);
     
-    let workStartHourDiff = startH - shiftType.startHour;
-    if (workStartHourDiff < 0) workStartHourDiff += 24;
-    const startOffset = workStartHourDiff * 60 + startM;
+    let startOffset = (startH * 60 + startM) - (shiftType.startHour * 60);
+    if (startOffset < 0) startOffset = 0; // Fallback for safety
 
-    let workEndHourDiff = endH - startH;
-    if (workEndHourDiff < 0) workEndHourDiff += 24;
-    if (workEndHourDiff === 0 && endM < startM) workEndHourDiff += 24;
-    const duration = workEndHourDiff * 60 + endM - startM;
+    const duration = Math.max(0, (endH * 60 + endM) - (startH * 60 + startM));
 
     if (duration > 0) {
       return [{

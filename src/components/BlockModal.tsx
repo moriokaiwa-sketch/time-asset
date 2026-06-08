@@ -35,20 +35,18 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setType(editingBlock.type);
       setCategoryId(editingBlock.categoryId || categories[0]?.id || "");
       
-      const totalStartMins = editingBlock.startOffset;
-      const h = Math.floor(totalStartMins / 60);
-      const m = totalStartMins % 60;
-      setStartHourInput((shiftConfig.startHour + h) % 24);
-      setStartMinuteInput(m);
+      const absStartMins = Math.max(0, shiftConfig.startHour * 60 + editingBlock.startOffset);
+      const absStartH = Math.floor(absStartMins / 60);
+      setStartHourInput(absStartH);
+      setStartMinuteInput(absStartMins % 60);
 
       setDurationHours(Math.floor(editingBlock.duration / 60));
       setDurationMinutes(editingBlock.duration % 60);
     } else if (initialStartOffset !== undefined) {
-      const totalMins = initialStartOffset;
-      const h = Math.floor(totalMins / 60);
-      const m = totalMins % 60;
-      setStartHourInput((shiftConfig.startHour + h) % 24);
-      setStartMinuteInput(m);
+      const absStartMins = Math.max(0, shiftConfig.startHour * 60 + initialStartOffset);
+      const absStartH = Math.floor(absStartMins / 60);
+      setStartHourInput(absStartH);
+      setStartMinuteInput(absStartMins % 60);
       setTitle("");
       setType(initialType);
       setCategoryId(categories[0]?.id || "");
@@ -70,15 +68,13 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   // Compute End Time
   const totalStartMinutes = startHourInput * 60 + startMinuteInput;
   const totalDurationMinutes = durationHours * 60 + durationMinutes;
-  const endTotalMinutes = (totalStartMinutes + totalDurationMinutes) % (24 * 60);
+  const endTotalMinutes = totalStartMinutes + totalDurationMinutes;
   const endHour = Math.floor(endTotalMinutes / 60);
   const endMinute = endTotalMinutes % 60;
 
   const handleEndChange = (newEndHour: number, newEndMin: number) => {
     let diff = (newEndHour * 60 + newEndMin) - totalStartMinutes;
-    if (diff <= 0) {
-      diff += 24 * 60; // Assume it crosses midnight
-    }
+    if (diff < 0) diff = 0; // Prevent negative duration
     setDurationHours(Math.floor(diff / 60));
     setDurationMinutes(diff % 60);
   };
@@ -114,7 +110,13 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       m = 0;
     }
     
-    setStartHourInput(h);
+    // Calculate absolute hour based on shiftConfig.startHour
+    let absH = h;
+    if (h < shiftConfig.startHour) {
+      absH += 24; // assume next day
+    }
+    
+    setStartHourInput(absH);
     setStartMinuteInput(m);
   };
 
@@ -130,17 +132,21 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       m = 0;
     }
     
-    handleEndChange(h, m);
+    // Calculate absolute hour based on startHourInput
+    let absH = h;
+    if (h < startHourInput % 24 || h < shiftConfig.startHour) {
+      absH += 24;
+    }
+    
+    handleEndChange(absH, m);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let hourDiff = startHourInput - shiftConfig.startHour;
-    if (hourDiff < 0) {
-      hourDiff += 24;
-    }
-    const startOffset = hourDiff * 60 + startMinuteInput;
+    let startOffset = (startHourInput * 60 + startMinuteInput) - (shiftConfig.startHour * 60);
+    if (startOffset < 0) startOffset = 0;
+    
     const duration = durationHours * 60 + durationMinutes;
 
     const blockData = { title, categoryId, startOffset, duration, type };
@@ -290,13 +296,42 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     現在時刻
                   </button>
                 </div>
-                <div className="flex w-full">
-                  <input 
-                    type="time" 
-                    value={startValue}
-                    onChange={handleStartTimeChange}
-                    className="flex-1 min-w-0 w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block box-border appearance-none m-0"
-                  />
+                <div className="flex w-full gap-1">
+                  <select
+                    value={Math.floor(startHourInput / 24) * 24}
+                    onChange={(e) => {
+                      const offset = Number(e.target.value);
+                      const displayHour = startHourInput % 24;
+                      setStartHourInput(offset + displayHour);
+                    }}
+                    className="w-[35%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
+                  >
+                    <option value={0}>当日</option>
+                    <option value={24}>翌日</option>
+                    <option value={48}>翌々日</option>
+                  </select>
+                  <select
+                    value={(startHourInput % 24).toString().padStart(2, '0')}
+                    onChange={(e) => {
+                      const displayHour = Number(e.target.value);
+                      const offset = Math.floor(startHourInput / 24) * 24;
+                      setStartHourInput(offset + displayHour);
+                    }}
+                    className="w-[35%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}時</option>
+                    ))}
+                  </select>
+                  <select
+                    value={startMinuteInput.toString().padStart(2, '0')}
+                    onChange={(e) => setStartMinuteInput(Number(e.target.value))}
+                    className="w-[30%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
+                  >
+                    {Array.from({ length: 60 }).map((_, i) => (
+                      <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -315,13 +350,42 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     現在時刻
                   </button>
                 </div>
-                <div className="flex w-full">
-                  <input 
-                    type="time" 
-                    value={endValue}
-                    onChange={handleEndTimeChange}
-                    className="flex-1 min-w-0 w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block box-border appearance-none m-0"
-                  />
+                <div className="flex w-full gap-1">
+                  <select
+                    value={Math.floor(endHour / 24) * 24}
+                    onChange={(e) => {
+                      const offset = Number(e.target.value);
+                      const displayHour = endHour % 24;
+                      handleEndChange(offset + displayHour, endMinute);
+                    }}
+                    className="w-[35%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
+                  >
+                    <option value={0}>当日</option>
+                    <option value={24}>翌日</option>
+                    <option value={48}>翌々日</option>
+                  </select>
+                  <select
+                    value={(endHour % 24).toString().padStart(2, '0')}
+                    onChange={(e) => {
+                      const displayHour = Number(e.target.value);
+                      const offset = Math.floor(endHour / 24) * 24;
+                      handleEndChange(offset + displayHour, endMinute);
+                    }}
+                    className="w-[35%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}時</option>
+                    ))}
+                  </select>
+                  <select
+                    value={endMinute.toString().padStart(2, '0')}
+                    onChange={(e) => handleEndChange(endHour, Number(e.target.value))}
+                    className="w-[30%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
+                  >
+                    {Array.from({ length: 60 }).map((_, i) => (
+                      <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
