@@ -1,6 +1,7 @@
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TimeBlock, ShiftType } from "@/types";
+import { generateId } from "@/utils/id";
 
 /**
  * Copies the PLAN blocks from the most recent past date that had the same shiftTypeId.
@@ -38,7 +39,7 @@ export async function getTemplateBlocks(userId: string | null, shiftType: ShiftT
         // Extract only plan blocks and generate new IDs
         return blocks
           .filter(b => b.type === "plan")
-          .map(b => ({ ...b, id: crypto.randomUUID() }));
+          .map(b => ({ ...b, id: generateId() }));
       }
     }
     
@@ -75,7 +76,7 @@ export async function getTemplateBlocks(userId: string | null, shiftType: ShiftT
     if (mostRecentBlocks.length > 0) {
       return mostRecentBlocks
         .filter(b => b.type === "plan")
-        .map(b => ({ ...b, id: crypto.randomUUID() }));
+        .map(b => ({ ...b, id: generateId() }));
     }
     
     return [];
@@ -99,7 +100,7 @@ export async function getTemplateBlocks(userId: string | null, shiftType: ShiftT
 
     if (duration > 0) {
       return [{
-        id: crypto.randomUUID(),
+        id: generateId(),
         title: "仕事",
         categoryId: "仕事", // Use the name as categoryId to match DEFAULT_CATEGORIES
         type: "plan",

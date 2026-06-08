@@ -4,6 +4,7 @@ import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TimeBlock, TimeBlockType, DayData } from "@/types";
 import { format } from "date-fns";
+import { generateId } from "@/utils/id";
 
 const STORAGE_KEY_BLOCKS_PREFIX = "time-asset-blocks-";
 const STORAGE_KEY_SHIFT_PREFIX = "time-asset-shift-";
@@ -83,7 +84,8 @@ export function useTimeBlocks(dateStr: string) {
         const storedBlocks = localStorage.getItem(`${STORAGE_KEY_BLOCKS_PREFIX}${dateStr}`);
         if (storedBlocks) {
           const parsed = JSON.parse(storedBlocks);
-          setBlocks(parsed);
+          const sanitized = parsed.map((b: any) => ({ ...b, id: b.id || generateId() }));
+          setBlocks(sanitized);
         } else {
           setBlocks([]);
         }
@@ -109,7 +111,8 @@ export function useTimeBlocks(dateStr: string) {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setBlocks(data.blocks || []);
+        const fetchedBlocks = (data.blocks || []).map((b: any) => ({ ...b, id: b.id || generateId() }));
+        setBlocks(fetchedBlocks);
         setShiftTypeId(data.shiftTypeId || null);
         setIsLoaded(true);
       } else {
@@ -123,12 +126,16 @@ export function useTimeBlocks(dateStr: string) {
           const legacyBlocksStr = localStorage.getItem("time-asset-blocks");
           
           if (storedBlocks) {
-            localBlocks = JSON.parse(storedBlocks);
+            const parsed = JSON.parse(storedBlocks);
+            localBlocks = parsed.map((b: any) => ({ ...b, id: b.id || generateId() }));
           } else if (isToday && legacyBlocksStr) {
             const parsed = JSON.parse(legacyBlocksStr);
             localBlocks = parsed.map((b: any) => {
-              if (b.category && !b.categoryId) return { ...b, categoryId: b.category };
-              return b;
+              const sanitized = { ...b, id: b.id || generateId() };
+              if (sanitized.category && !sanitized.categoryId) {
+                sanitized.categoryId = sanitized.category;
+              }
+              return sanitized;
             });
             // Clear legacy to prevent re-migration
             localStorage.removeItem("time-asset-blocks");
@@ -204,7 +211,7 @@ export function useTimeBlocks(dateStr: string) {
   const addBlock = (block: Omit<TimeBlock, "id" | "column" | "totalColumns">) => {
     const newBlock: TimeBlock = {
       ...block,
-      id: crypto.randomUUID(),
+      id: generateId(),
     };
     setAndProcessBlocks([...blocks, newBlock]);
   };
