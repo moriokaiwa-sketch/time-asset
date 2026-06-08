@@ -117,6 +117,21 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     setStartMinuteInput(m);
   };
 
+  const handleSetNowEnd = () => {
+    const now = new Date();
+    let h = now.getHours();
+    let m = now.getMinutes();
+    
+    // Snap to nearest 5 minutes
+    m = Math.round(m / 5) * 5;
+    if (m === 60) {
+      h = (h + 1) % 24;
+      m = 0;
+    }
+    
+    handleEndChange(h, m);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -288,7 +303,17 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
 
               {/* End Time */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">終了時間</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">終了時間</label>
+                  <button 
+                    type="button" 
+                    onClick={handleSetNowEnd}
+                    className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-100/50 px-2 py-1 rounded-lg hover:bg-indigo-100 transition-colors active:scale-95"
+                  >
+                    <Clock className="w-3 h-3" />
+                    現在時刻
+                  </button>
+                </div>
                 <div className="flex w-full">
                   <input 
                     type="time" 
