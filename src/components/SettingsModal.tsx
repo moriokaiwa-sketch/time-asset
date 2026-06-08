@@ -148,7 +148,7 @@ export function SettingsModal({
                           onChange={(e) => onUpdateShiftType(shift.id, { startHour: Number(e.target.value) })}
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
-                          {Array.from({ length: 24 }).map((_, i) => (
+                          {Array.from({ length: 30 }).map((_, i) => (
                             <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
                           ))}
                         </select>
@@ -156,17 +156,19 @@ export function SettingsModal({
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">当日の就寝時刻</label>
                         <select 
-                          value={(shift.startHour + shift.duration) % 24}
+                          value={(() => {
+                            const val = shift.startHour + shift.duration;
+                            return val > 29 ? val % 24 : val;
+                          })()}
                           onChange={(e) => {
                             const endHour = Number(e.target.value);
                             let newDuration = endHour - shift.startHour;
                             if (newDuration <= 0) newDuration += 24;
-                            // 24時間以上の表示に対応するため、もし以前のdurationが24より大きかった場合の考慮は一旦せずシンプルに24時間以内とする
                             onUpdateShiftType(shift.id, { duration: newDuration });
                           }}
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
-                          {Array.from({ length: 24 }).map((_, i) => (
+                          {Array.from({ length: 30 }).map((_, i) => (
                             <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
                           ))}
                         </select>
@@ -177,21 +179,69 @@ export function SettingsModal({
                     <div className="pt-2 border-t border-slate-100 flex gap-2">
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">勤務開始</label>
-                        <input
-                          type="time"
-                          value={shift.workStartTime ?? (shift.workStartHour != null ? `${shift.workStartHour.toString().padStart(2, '0')}:00` : `${shift.startHour.toString().padStart(2, '0')}:00`)}
-                          onChange={(e) => onUpdateShiftType(shift.id, { workStartTime: e.target.value })}
-                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <div className="flex gap-1">
+                          <select
+                            value={shift.workStartTime ? shift.workStartTime.split(':')[0] : (shift.workStartHour != null ? shift.workStartHour.toString().padStart(2, '0') : shift.startHour.toString().padStart(2, '0'))}
+                            onChange={(e) => {
+                              const m = shift.workStartTime ? shift.workStartTime.split(':')[1] : '00';
+                              onUpdateShiftType(shift.id, { workStartTime: `${e.target.value.padStart(2, '0')}:${m}` });
+                            }}
+                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 30 }).map((_, i) => (
+                              <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}時</option>
+                            ))}
+                          </select>
+                          <select
+                            value={shift.workStartTime ? shift.workStartTime.split(':')[1] : '00'}
+                            onChange={(e) => {
+                              const h = shift.workStartTime ? shift.workStartTime.split(':')[0] : (shift.workStartHour != null ? shift.workStartHour.toString().padStart(2, '0') : shift.startHour.toString().padStart(2, '0'));
+                              onUpdateShiftType(shift.id, { workStartTime: `${h}:${e.target.value.padStart(2, '0')}` });
+                            }}
+                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 60 }).map((_, i) => (
+                              <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">勤務終了</label>
-                        <input
-                          type="time"
-                          value={shift.workEndTime ?? (shift.workEndHour != null ? `${shift.workEndHour.toString().padStart(2, '0')}:00` : `${((shift.startHour + shift.duration) % 24).toString().padStart(2, '0')}:00`)}
-                          onChange={(e) => onUpdateShiftType(shift.id, { workEndTime: e.target.value })}
-                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <div className="flex gap-1">
+                          <select
+                            value={shift.workEndTime ? shift.workEndTime.split(':')[0] : (() => {
+                              const defaultH = shift.workEndHour != null ? shift.workEndHour : (shift.startHour + shift.duration);
+                              const displayH = defaultH > 29 ? defaultH % 24 : defaultH;
+                              return displayH.toString().padStart(2, '0');
+                            })()}
+                            onChange={(e) => {
+                              const m = shift.workEndTime ? shift.workEndTime.split(':')[1] : '00';
+                              onUpdateShiftType(shift.id, { workEndTime: `${e.target.value.padStart(2, '0')}:${m}` });
+                            }}
+                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 30 }).map((_, i) => (
+                              <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}時</option>
+                            ))}
+                          </select>
+                          <select
+                            value={shift.workEndTime ? shift.workEndTime.split(':')[1] : '00'}
+                            onChange={(e) => {
+                              const h = shift.workEndTime ? shift.workEndTime.split(':')[0] : (() => {
+                                const defaultH = shift.workEndHour != null ? shift.workEndHour : (shift.startHour + shift.duration);
+                                const displayH = defaultH > 29 ? defaultH % 24 : defaultH;
+                                return displayH.toString().padStart(2, '0');
+                              })();
+                              onUpdateShiftType(shift.id, { workEndTime: `${h}:${e.target.value.padStart(2, '0')}` });
+                            }}
+                            className="w-1/2 p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            {Array.from({ length: 60 }).map((_, i) => (
+                              <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
