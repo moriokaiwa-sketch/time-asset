@@ -17,6 +17,19 @@ const PRESET_COLORS = [
   "#e2e8f0", // slate-200
 ];
 
+const PRESET_SHIFT_COLORS = [
+  "bg-red-100 text-red-700 border-red-200",
+  "bg-orange-100 text-orange-700 border-orange-200",
+  "bg-yellow-100 text-yellow-700 border-yellow-200",
+  "bg-green-100 text-green-700 border-green-200",
+  "bg-teal-100 text-teal-700 border-teal-200",
+  "bg-blue-100 text-blue-700 border-blue-200",
+  "bg-indigo-100 text-indigo-700 border-indigo-200",
+  "bg-purple-100 text-purple-700 border-purple-200",
+  "bg-pink-100 text-pink-700 border-pink-200",
+  "bg-slate-100 text-slate-700 border-slate-200",
+];
+
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -45,6 +58,7 @@ export function SettingsModal({
   const [isShiftOpen, setIsShiftOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [activeColorPickerId, setActiveColorPickerId] = useState<string | null>(null);
+  const [activeShiftColorPickerId, setActiveShiftColorPickerId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -84,6 +98,14 @@ export function SettingsModal({
                 {shiftTypes.map(shift => (
                   <div key={shift.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                     <div className="flex items-center gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setActiveShiftColorPickerId(activeShiftColorPickerId === shift.id ? null : shift.id)}
+                        className={`w-10 h-10 shrink-0 rounded-lg shadow-sm border transition-transform active:scale-95 flex items-center justify-center font-bold text-xs ${shift.color}`}
+                        aria-label="色を変更"
+                      >
+                        色
+                      </button>
                       <input 
                         type="text"
                         value={shift.name}
@@ -99,6 +121,23 @@ export function SettingsModal({
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
+
+                    {activeShiftColorPickerId === shift.id && (
+                      <div className="flex flex-wrap gap-2 pt-1 pb-2 px-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        {PRESET_SHIFT_COLORS.map(colorClass => (
+                          <button
+                            key={colorClass}
+                            type="button"
+                            onClick={() => {
+                              onUpdateShiftType(shift.id, { color: colorClass });
+                              setActiveShiftColorPickerId(null);
+                            }}
+                            className={`w-8 h-8 rounded-full border transition-transform active:scale-95 ${colorClass} ${shift.color === colorClass ? 'scale-110 ring-2 ring-slate-800 ring-offset-1' : 'shadow-sm border-transparent'}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">前日の就寝時刻</label>
