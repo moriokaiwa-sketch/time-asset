@@ -2,21 +2,16 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { TimeBlock } from "@/hooks/useTimeBlocks";
 
 interface TimelineProps {
   startHour: number; // 0-23
   duration: number; // in hours
-  events?: {
-    id: string;
-    title: string;
-    startOffset: number; // minutes from start
-    duration: number; // minutes
-    type: "plan" | "actual";
-    color?: string;
-  }[];
+  events?: TimeBlock[];
+  activeTab: "plan" | "actual";
 }
 
-export function Timeline({ startHour, duration, events = [] }: TimelineProps) {
+export function Timeline({ startHour, duration, events = [], activeTab }: TimelineProps) {
   // Generate the hours array
   const hours = Array.from({ length: duration + 1 }, (_, i) => {
     const hour = (startHour + i) % 24;
@@ -70,27 +65,40 @@ export function Timeline({ startHour, duration, events = [] }: TimelineProps) {
         {/* Events Container */}
         <div className="absolute top-4 left-0 right-0 bottom-4 px-2">
           {events.map((event) => {
+            // Hide ACTUAL blocks if we are in PLAN tab
+            if (activeTab === "plan" && event.type === "actual") return null;
+
             const topOffset = (event.startOffset / 60) * PIXELS_PER_HOUR;
             const height = (event.duration / 60) * PIXELS_PER_HOUR;
+
+            // Determine horizontal positioning
+            let horizontalClass = "left-2 right-2"; // full width by default
+            if (activeTab === "actual") {
+              if (event.type === "plan") {
+                horizontalClass = "left-2 w-[calc(50%-8px)]"; // left half
+              } else {
+                horizontalClass = "right-2 w-[calc(50%-8px)]"; // right half
+              }
+            }
 
             return (
               <div
                 key={event.id}
                 className={cn(
-                  "absolute left-2 right-2 rounded-xl p-3 shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
+                  "absolute rounded-xl p-3 shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer overflow-hidden",
                   event.type === "plan" 
-                    ? "bg-indigo-50 border border-indigo-100 text-indigo-900" 
-                    : "bg-emerald-50 border border-emerald-100 text-emerald-900",
-                  event.color
+                    ? "bg-indigo-50 border border-indigo-200 text-indigo-900" 
+                    : "bg-emerald-50 border border-emerald-200 text-emerald-900",
+                  horizontalClass
                 )}
                 style={{
                   top: `${topOffset}px`,
                   height: `${height}px`,
                 }}
               >
-                <div className="text-sm font-bold tracking-tight mb-0.5">{event.title}</div>
+                <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight">{event.title}</div>
                 <div className={cn(
-                  "text-xs opacity-70 font-medium",
+                  "text-xs font-medium opacity-80",
                   event.type === "plan" ? "text-indigo-700" : "text-emerald-700"
                 )}>
                   {Math.floor(event.duration / 60)}h {event.duration % 60 > 0 ? `${event.duration % 60}m` : ''}
