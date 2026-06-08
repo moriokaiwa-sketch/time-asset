@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Clock } from "lucide-react";
 import { ShiftConfig, TimeBlockType, TimeBlock, Category } from "@/hooks/useTimeBlocks";
 
 interface BlockModalProps {
@@ -20,6 +20,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
   const [categoryId, setCategoryId] = useState("");
+  
   const [startHourInput, setStartHourInput] = useState(shiftConfig.startHour);
   const [startMinuteInput, setStartMinuteInput] = useState(0);
   const [durationHours, setDurationHours] = useState(1);
@@ -64,6 +65,38 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   }, [isOpen, initialStartOffset, shiftConfig.startHour, editingBlock, categories]);
 
   if (!isOpen) return null;
+
+  // Compute End Time
+  const totalStartMinutes = startHourInput * 60 + startMinuteInput;
+  const totalDurationMinutes = durationHours * 60 + durationMinutes;
+  const endTotalMinutes = (totalStartMinutes + totalDurationMinutes) % (24 * 60);
+  const endHour = Math.floor(endTotalMinutes / 60);
+  const endMinute = endTotalMinutes % 60;
+
+  const handleEndChange = (newEndHour: number, newEndMin: number) => {
+    let diff = (newEndHour * 60 + newEndMin) - totalStartMinutes;
+    if (diff <= 0) {
+      diff += 24 * 60; // Assume it crosses midnight
+    }
+    setDurationHours(Math.floor(diff / 60));
+    setDurationMinutes(diff % 60);
+  };
+
+  const handleSetNow = () => {
+    const now = new Date();
+    let h = now.getHours();
+    let m = now.getMinutes();
+    
+    // Snap to nearest 5 minutes
+    m = Math.round(m / 5) * 5;
+    if (m === 60) {
+      h = (h + 1) % 24;
+      m = 0;
+    }
+    
+    setStartHourInput(h);
+    setStartMinuteInput(m);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,6 +159,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
 
         <div className="overflow-y-auto p-6">
           <form id="block-form" onSubmit={handleSubmit} className="space-y-6">
+            
             {/* Type Toggle */}
             <div className="flex p-1 bg-slate-100/80 rounded-xl">
               <button
@@ -154,7 +188,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
               <select 
                 value={categoryId} 
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -162,7 +196,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
               </select>
             </div>
 
-            {/* Title */}
+            {/* Title / Details */}
             <div className="space-y-2">
               <label className="block text-sm font-bold text-slate-700">詳細</label>
               <input 
@@ -170,60 +204,110 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                 placeholder="例: 会議、睡眠、休憩など"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
 
-            {/* Start Time */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-700">開始時間</label>
-              <div className="flex items-center gap-2">
-                <select 
-                  value={startHourInput} 
-                  onChange={(e) => setStartHourInput(Number(e.target.value))}
-                  className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <option key={i} value={i}>{i.toString().padStart(2, '0')}時</option>
-                  ))}
-                </select>
-                <span className="font-bold text-slate-400">:</span>
-                <select 
-                  value={startMinuteInput} 
-                  onChange={(e) => setStartMinuteInput(Number(e.target.value))}
-                  className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                    <option key={m} value={m}>{m.toString().padStart(2, '0')}分</option>
-                  ))}
-                </select>
+            {/* Time Settings Container */}
+            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 space-y-5">
+              
+              {/* Start Time */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">開始時間</label>
+                  <button 
+                    type="button" 
+                    onClick={handleSetNow}
+                    className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-100/50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors active:scale-95"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    現在時刻
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={startHourInput} 
+                    onChange={(e) => setStartHourInput(Number(e.target.value))}
+                    className="flex-1 p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                    style={{ textAlignLast: 'center' }}
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <option key={i} value={i}>{i.toString().padStart(2, '0')}</option>
+                    ))}
+                  </select>
+                  <span className="font-black text-slate-300 text-xl pb-1">:</span>
+                  <select 
+                    value={startMinuteInput} 
+                    onChange={(e) => setStartMinuteInput(Number(e.target.value))}
+                    className="flex-1 p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                    style={{ textAlignLast: 'center' }}
+                  >
+                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                      <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              <div className="h-px bg-slate-200 w-full" />
+
+              {/* End Time */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">終了時間</label>
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={endHour} 
+                    onChange={(e) => handleEndChange(Number(e.target.value), endMinute)}
+                    className="flex-1 p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                    style={{ textAlignLast: 'center' }}
+                  >
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <option key={i} value={i}>{i.toString().padStart(2, '0')}</option>
+                    ))}
+                  </select>
+                  <span className="font-black text-slate-300 text-xl pb-1">:</span>
+                  <select 
+                    value={endMinute} 
+                    onChange={(e) => handleEndChange(endHour, Number(e.target.value))}
+                    className="flex-1 p-3.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                    style={{ textAlignLast: 'center' }}
+                  >
+                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                      <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-2 pt-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">所要時間</label>
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={durationHours} 
+                    onChange={(e) => setDurationHours(Number(e.target.value))}
+                    className="flex-1 p-3.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                    style={{ textAlignLast: 'center' }}
+                  >
+                    {Array.from({ length: 25 }).map((_, i) => (
+                      <option key={i} value={i}>{i}時間</option>
+                    ))}
+                  </select>
+                  <select 
+                    value={durationMinutes} 
+                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                    className="flex-1 p-3.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                    style={{ textAlignLast: 'center' }}
+                  >
+                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
+                      <option key={m} value={m}>{m}分</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
             </div>
 
-            {/* Duration */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-700">所要時間</label>
-              <div className="flex items-center gap-2">
-                <select 
-                  value={durationHours} 
-                  onChange={(e) => setDurationHours(Number(e.target.value))}
-                  className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  {Array.from({ length: 25 }).map((_, i) => (
-                    <option key={i} value={i}>{i}時間</option>
-                  ))}
-                </select>
-                <select 
-                  value={durationMinutes} 
-                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                  className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                    <option key={m} value={m}>{m}分</option>
-                  ))}
-                </select>
-              </div>
-            </div>
           </form>
         </div>
 
