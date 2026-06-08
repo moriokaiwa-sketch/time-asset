@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Timeline } from "@/components/Timeline";
-import { Clock, Calendar, Settings } from "lucide-react";
+import { Clock, Calendar, Settings, LayoutGrid, ZoomIn } from "lucide-react";
 import { useTimeBlocks, TimeBlock } from "@/hooks/useTimeBlocks";
 import { BlockModal } from "@/components/BlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -27,6 +27,7 @@ export default function Home() {
   const [initialOffset, setInitialOffset] = useState<number | undefined>(undefined);
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isOverviewMode, setIsOverviewMode] = useState(false);
 
   if (!isLoaded) {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>;
@@ -107,11 +108,20 @@ export default function Home() {
           onUpdateBlock={updateBlock}
           onAddBlockRequest={handleAddBlockRequest}
           onBlockClick={handleBlockClick}
+          isOverviewMode={isOverviewMode}
         />
       </div>
 
-      {/* Floating Action Button for adding time blocks */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30">
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
+        <button
+          onClick={() => setIsOverviewMode(!isOverviewMode)}
+          className="flex items-center justify-center p-4 bg-white text-slate-700 rounded-full shadow-lg shadow-slate-900/10 hover:scale-105 active:scale-95 transition-all border border-slate-100"
+          aria-label={isOverviewMode ? "詳細表示" : "全体表示"}
+        >
+          {isOverviewMode ? <ZoomIn className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+        </button>
+
         <button 
           onClick={() => { setEditingBlock(null); setInitialOffset(undefined); setIsAddModalOpen(true); }}
           className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-full font-bold shadow-lg shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all"

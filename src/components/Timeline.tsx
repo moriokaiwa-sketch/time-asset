@@ -13,9 +13,10 @@ interface TimelineProps {
   onUpdateBlock?: (id: string, updates: Partial<TimeBlock>) => void;
   onAddBlockRequest?: (startOffset: number) => void;
   onBlockClick?: (block: TimeBlock) => void;
+  isOverviewMode?: boolean;
 }
 
-export function Timeline({ startHour, duration, events = [], categories = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick }: TimelineProps) {
+export function Timeline({ startHour, duration, events = [], categories = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick, isOverviewMode = false }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Drag State
@@ -33,7 +34,31 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   // Long Press State
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const PIXELS_PER_HOUR = 80;
+  // Viewport Height for Overview Mode
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const updateHeight = () => {
+        if (containerRef.current && containerRef.current.parentElement) {
+          // padding bottom is 96px (pb-24)
+          const parentHeight = containerRef.current.parentElement.clientHeight - 96;
+          setContainerHeight(parentHeight > 0 ? parentHeight : window.innerHeight - 200);
+        } else {
+          setContainerHeight(window.innerHeight - 200);
+        }
+      };
+      updateHeight();
+      // small delay to ensure layout is done
+      setTimeout(updateHeight, 100);
+      window.addEventListener("resize", updateHeight);
+      return () => window.removeEventListener("resize", updateHeight);
+    }
+  }, []);
+
+  const PIXELS_PER_HOUR = isOverviewMode && containerHeight > 0 
+    ? Math.max(containerHeight / duration, 20) 
+    : 80;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
   const SNAP_MINUTES = 15;
 
@@ -85,9 +110,6 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
           }
           if (onUpdateBlock) onUpdateBlock(draggedBlockId, { duration: newDuration });
         }
-      } else if (draggedBlockId && dragDeltaMinutes === 0 && dragMode === "move") {
-        // The pointer was released without moving on a selected block.
-        // We will let the onClick handler deal with the tap/double-tap logic.
       }
 
       setDraggedBlockId(null);
@@ -103,7 +125,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [draggedBlockId, dragMode, dragDeltaMinutes, duration, onUpdateBlock, onBlockClick, events]);
+  }, [draggedBlockId, dragMode, dragDeltaMinutes, duration, onUpdateBlock, PIXELS_PER_MINUTE]);
 
   // Handle Background Long Press & Background Tap
   const handleBgPointerDown = (e: React.PointerEvent) => {
@@ -141,7 +163,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
         {hours.map((hour, index) => (
           <div
             key={`axis-${index}`}
-            className="relative flex justify-end pr-3"
+            className="relative flex justify-end pr-3 transition-[height] duration-300 ease-in-out"
             style={{ height: PIXELS_PER_HOUR }}
           >
             <span className="text-xs font-medium text-slate-400 -translate-y-2.5">
@@ -166,14 +188,14 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
         {hours.map((_, index) => (
           <div
             key={`grid-${index}`}
-            className="absolute left-0 right-0 border-t border-slate-100/60 pointer-events-none bg-grid"
+            className="absolute left-0 right-0 border-t border-slate-100/60 pointer-events-none bg-grid transition-[top] duration-300 ease-in-out"
             style={{ top: `calc(1rem + ${index * PIXELS_PER_HOUR}px)` }}
           />
         ))}
 
         {/* Current Time Indicator (Static for mockup) */}
         <div 
-          className="absolute left-0 right-0 flex items-center z-20 pointer-events-none"
+          className="absolute left-0 right-0 flex items-center z-20 pointer-events-none transition-[top] duration-300 ease-in-out"
           style={{ top: `calc(1rem + ${2.5 * PIXELS_PER_HOUR}px)` }}
         >
           <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
