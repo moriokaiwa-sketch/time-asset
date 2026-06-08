@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { TimeBlock, Category } from "@/types";
+import { format } from "date-fns";
 
 interface TimelineProps {
   startHour: number; // 0-23
@@ -14,9 +15,10 @@ interface TimelineProps {
   onAddBlockRequest?: (startOffset: number) => void;
   onBlockClick?: (block: TimeBlock) => void;
   isOverviewMode?: boolean;
+  dateStr?: string;
 }
 
-export function Timeline({ startHour, duration, events = [], categories = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick, isOverviewMode = false }: TimelineProps) {
+export function Timeline({ startHour, duration, events = [], categories = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick, isOverviewMode = false, dateStr }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Drag State
@@ -29,6 +31,12 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
 
   // Selection & Tap State
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
   const lastTapTimeRef = useRef<Record<string, number>>({});
 
   // Long Press State
@@ -220,6 +228,31 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
       longPressTimer.current = null;
     }
   };
+  let currentTimeIndicator = null;
+  const isToday = dateStr === format(now, "yyyy-MM-dd");
+  if (isToday) {
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // Calculate offset in hours
+    let hoursOffset = currentHour - startHour;
+    if (hoursOffset < 0) hoursOffset += 24;
+    
+    const totalOffsetHours = hoursOffset + (currentMinute / 60);
+
+    // Only show if it's within the duration
+    if (totalOffsetHours <= duration) {
+      currentTimeIndicator = (
+        <div 
+          className="absolute left-0 right-0 flex items-center z-20 pointer-events-none"
+          style={{ top: `calc(1rem + ${totalOffsetHours * PIXELS_PER_HOUR}px)` }}
+        >
+          <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+          <div className="h-[1px] flex-1 bg-blue-500/60" />
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="relative w-full flex bg-white/50 backdrop-blur-xl rounded-t-3xl shadow-[0_-8px_30px_rgb(0,0,0,0.04)] overflow-hidden min-h-[calc(100vh-140px)] select-none" style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" }}>
@@ -258,14 +291,8 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
           />
         ))}
 
-        {/* Current Time Indicator (Static for mockup) */}
-        <div 
-          className="absolute left-0 right-0 flex items-center z-20 pointer-events-none transition-[top] duration-300 ease-in-out"
-          style={{ top: `calc(1rem + ${2.5 * PIXELS_PER_HOUR}px)` }}
-        >
-          <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-          <div className="h-[1px] flex-1 bg-blue-500/60" />
-        </div>
+        {/* Current Time Indicator */}
+        {currentTimeIndicator}
 
         {/* Events Container */}
         <div className="absolute top-4 left-0 right-0 bottom-4 px-2 pointer-events-none">
