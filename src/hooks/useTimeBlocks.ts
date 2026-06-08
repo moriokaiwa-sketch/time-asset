@@ -7,6 +7,7 @@ export type TimeBlockType = "plan" | "actual";
 export interface TimeBlock {
   id: string;
   title: string;
+  category?: string;
   startOffset: number; // minutes from shift start
   duration: number; // minutes
   type: TimeBlockType;

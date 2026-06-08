@@ -15,9 +15,23 @@ interface BlockModalProps {
   onDelete?: (id: string) => void;
 }
 
+const PRESET_CATEGORIES = [
+  "仕事", 
+  "会議", 
+  "作業", 
+  "睡眠", 
+  "食事", 
+  "休憩", 
+  "移動", 
+  "家事",
+  "趣味",
+  "その他"
+];
+
 export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, editingBlock, onAdd, onUpdate, onDelete }: BlockModalProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
+  const [category, setCategory] = useState(PRESET_CATEGORIES[0]);
   const [startHourInput, setStartHourInput] = useState(shiftConfig.startHour);
   const [startMinuteInput, setStartMinuteInput] = useState(0);
   const [durationHours, setDurationHours] = useState(1);
@@ -29,6 +43,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
     if (editingBlock) {
       setTitle(editingBlock.title);
       setType(editingBlock.type);
+      setCategory(editingBlock.category || PRESET_CATEGORIES[0]);
       
       const totalStartMins = editingBlock.startOffset;
       const h = Math.floor(totalStartMins / 60);
@@ -46,6 +61,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
       setStartMinuteInput(m);
       setTitle("");
       setType("plan");
+      setCategory(PRESET_CATEGORIES[0]);
       setDurationHours(1);
       setDurationMinutes(0);
     } else {
@@ -53,6 +69,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
       setStartMinuteInput(0);
       setTitle("");
       setType("plan");
+      setCategory(PRESET_CATEGORIES[0]);
       setDurationHours(1);
       setDurationMinutes(0);
     }
@@ -75,6 +92,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
     if (editingBlock && onUpdate) {
       onUpdate(editingBlock.id, {
         title,
+        category,
         startOffset,
         duration,
         type,
@@ -82,6 +100,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
     } else {
       onAdd({
         title,
+        category,
         startOffset,
         duration,
         type,
@@ -107,8 +126,8 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 className="text-xl font-bold text-slate-900">
-            {isEditing ? "ブロックを編集" : "ブロックを追加"}
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            {isEditing ? "Edit Block" : "Add Block"}
           </h2>
           <button 
             onClick={onClose}
@@ -119,19 +138,6 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="block text-sm font-bold text-slate-700">タイトル</label>
-            <input 
-              required
-              type="text" 
-              placeholder="例: 会議、睡眠、休憩など"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            />
-          </div>
-
           {/* Type Toggle */}
           <div className="flex p-1 bg-slate-100/80 rounded-xl">
             <button
@@ -152,6 +158,33 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
             >
               ACTUAL (実績)
             </button>
+          </div>
+
+          {/* Category */}
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-slate-700">カテゴリ</label>
+            <select 
+              value={category} 
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            >
+              {PRESET_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Title */}
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-slate-700">タイトル</label>
+            <input 
+              required
+              type="text" 
+              placeholder="例: 会議、睡眠、休憩など"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
           </div>
 
           {/* Start Time */}
@@ -217,9 +250,9 @@ export function BlockModal({ isOpen, onClose, shiftConfig, initialStartOffset, e
             )}
             <button
               type="submit"
-              className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors active:scale-[0.98]"
+              className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl font-bold tracking-wider hover:bg-slate-800 transition-colors active:scale-[0.98]"
             >
-              {isEditing ? "保存する" : "追加する"}
+              {isEditing ? "SAVE" : "ADD"}
             </button>
           </div>
         </form>
