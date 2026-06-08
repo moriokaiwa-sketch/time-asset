@@ -70,6 +70,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
     let currentClientY = dragStartY.current;
     let autoScrollRaf: number | null = null;
     let lastScrollTime = performance.now();
+    let currentDragDelta = 0;
 
     const updateDragDelta = () => {
       const deltaY = (currentClientY - dragStartY.current) + totalScrolled;
@@ -77,7 +78,11 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
       
       // Snap to SNAP_MINUTES
       deltaMin = Math.round(deltaMin / SNAP_MINUTES) * SNAP_MINUTES;
-      setDragDeltaMinutes(deltaMin);
+      
+      if (currentDragDelta !== deltaMin) {
+        currentDragDelta = deltaMin;
+        setDragDeltaMinutes(deltaMin);
+      }
     };
 
     const handlePointerMove = (e: PointerEvent) => {
@@ -106,18 +111,21 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
       }
 
       if (scrollY !== 0 && dt < 100) { // dt < 100 to prevent huge jumps if tab was inactive
-        const scrollContainer = document.querySelector('.overflow-y-auto') || document.documentElement;
-        
         let actualScrolled = 0;
-        if (scrollContainer === document.documentElement) {
-          const prevScrollY = window.scrollY;
-          window.scrollBy(0, scrollY);
-          actualScrolled = window.scrollY - prevScrollY;
-        } else {
-          const el = scrollContainer as HTMLElement;
-          const prevScrollTop = el.scrollTop;
-          el.scrollBy(0, scrollY);
-          actualScrolled = el.scrollTop - prevScrollTop;
+        
+        // Try window first
+        const prevWindowScroll = window.scrollY;
+        window.scrollBy(0, scrollY);
+        actualScrolled = window.scrollY - prevWindowScroll;
+
+        // Try container if window didn't scroll
+        if (actualScrolled === 0) {
+          const el = document.querySelector('.overflow-y-auto') as HTMLElement;
+          if (el) {
+            const prevElScroll = el.scrollTop;
+            el.scrollBy(0, scrollY);
+            actualScrolled = el.scrollTop - prevElScroll;
+          }
         }
 
         if (actualScrolled !== 0) {
@@ -137,15 +145,15 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
     const handlePointerUp = () => {
       if (autoScrollRaf) cancelAnimationFrame(autoScrollRaf);
 
-      if (draggedBlockId && dragDeltaMinutes !== 0) {
+      if (draggedBlockId && currentDragDelta !== 0) {
         if (dragMode === "move") {
-          let newOffset = initialOffsetRef.current + dragDeltaMinutes;
+          let newOffset = initialOffsetRef.current + currentDragDelta;
           // Clamp to timeline boundaries
           newOffset = Math.max(0, Math.min(newOffset, duration * 60 - initialDurationRef.current));
           if (onUpdateBlock) onUpdateBlock(draggedBlockId, { startOffset: newOffset });
         } else if (dragMode === "resizeTop") {
-          let newDuration = initialDurationRef.current - dragDeltaMinutes;
-          let newOffset = initialOffsetRef.current + dragDeltaMinutes;
+          let newDuration = initialDurationRef.current - currentDragDelta;
+          let newOffset = initialOffsetRef.current + currentDragDelta;
           
           if (newDuration < 15) {
             const diff = 15 - newDuration;
@@ -159,7 +167,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
           }
           if (onUpdateBlock) onUpdateBlock(draggedBlockId, { startOffset: newOffset, duration: newDuration });
         } else if (dragMode === "resizeBottom") {
-          let newDuration = initialDurationRef.current + dragDeltaMinutes;
+          let newDuration = initialDurationRef.current + currentDragDelta;
           if (newDuration < 15) newDuration = 15;
           if (initialOffsetRef.current + newDuration > duration * 60) {
             newDuration = duration * 60 - initialOffsetRef.current;
@@ -182,7 +190,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [draggedBlockId, dragMode, dragDeltaMinutes, duration, onUpdateBlock, PIXELS_PER_MINUTE]);
+  }, [draggedBlockId, dragMode, duration, onUpdateBlock, PIXELS_PER_MINUTE]);
 
   // Handle Background Long Press & Background Tap
   const handleBgPointerDown = (e: React.PointerEvent) => {
