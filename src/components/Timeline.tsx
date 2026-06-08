@@ -260,19 +260,16 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
             const bgColor = category?.color || "#e2e8f0"; // Fallback color
             
             let blockOpacity = 1;
-            let isDashed = false;
             
             if (event.type === "plan") {
               blockOpacity = 0.4;
-              isDashed = true;
             }
 
             return (
               <div
                 key={event.id}
                 className={cn(
-                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none flex flex-col text-slate-900 border",
-                  isDashed ? "border-slate-500 border-dashed border-2" : "border-black/5",
+                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none flex flex-col text-slate-900 border border-black/5",
                   isDragging && "z-30 shadow-xl scale-[1.02]", // Removed opacity-90 from tailwind class to rely on style prop
                   !isDragging && "z-20 transition-[top,left,width,height] duration-200",
                   isSelected && "ring-2 ring-slate-900 ring-offset-1 z-30"
