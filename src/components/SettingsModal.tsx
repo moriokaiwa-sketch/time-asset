@@ -75,7 +75,7 @@ export function SettingsModal({
                     </div>
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 mb-1">画面表示の開始</label>
+                        <label className="block text-xs font-bold text-slate-500 mb-1">前日の就寝時刻</label>
                         <select 
                           value={shift.startHour}
                           onChange={(e) => onUpdateShiftType(shift.id, { startHour: Number(e.target.value) })}
@@ -87,15 +87,21 @@ export function SettingsModal({
                         </select>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 mb-1">画面の長さ</label>
+                        <label className="block text-xs font-bold text-slate-500 mb-1">当日の就寝時刻</label>
                         <select 
-                          value={shift.duration}
-                          onChange={(e) => onUpdateShiftType(shift.id, { duration: Number(e.target.value) })}
+                          value={(shift.startHour + shift.duration) % 24}
+                          onChange={(e) => {
+                            const endHour = Number(e.target.value);
+                            let newDuration = endHour - shift.startHour;
+                            if (newDuration <= 0) newDuration += 24;
+                            // 24時間以上の表示に対応するため、もし以前のdurationが24より大きかった場合の考慮は一旦せずシンプルに24時間以内とする
+                            onUpdateShiftType(shift.id, { duration: newDuration });
+                          }}
                           className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
-                          <option value={12}>12時間</option>
-                          <option value={24}>24時間</option>
-                          <option value={48}>48時間</option>
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                          ))}
                         </select>
                       </div>
                     </div>
