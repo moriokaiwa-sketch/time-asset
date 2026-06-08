@@ -2,19 +2,20 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { TimeBlock } from "@/hooks/useTimeBlocks";
+import { TimeBlock, Category } from "@/hooks/useTimeBlocks";
 
 interface TimelineProps {
   startHour: number; // 0-23
   duration: number; // in hours
   events?: TimeBlock[];
+  categories?: Category[];
   activeTab: "plan" | "actual";
   onUpdateBlock?: (id: string, updates: Partial<TimeBlock>) => void;
   onAddBlockRequest?: (startOffset: number) => void;
   onBlockClick?: (block: TimeBlock) => void;
 }
 
-export function Timeline({ startHour, duration, events = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick }: TimelineProps) {
+export function Timeline({ startHour, duration, events = [], categories = [], activeTab, onUpdateBlock, onAddBlockRequest, onBlockClick }: TimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Drag State
@@ -254,23 +255,35 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
 
             const isSelected = selectedBlockId === event.id;
 
+            // Appearance based on category and tab
+            const category = categories.find(c => c.id === event.categoryId);
+            const bgColor = category?.color || "#e2e8f0"; // Fallback color
+            
+            let blockOpacity = 1;
+            let isDashed = false;
+            
+            if (activeTab === "actual" && event.type === "plan") {
+              blockOpacity = 0.4;
+              isDashed = true;
+            }
+
             return (
               <div
                 key={event.id}
                 className={cn(
-                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none flex flex-col",
-                  event.type === "plan" 
-                    ? "bg-indigo-50 border border-indigo-200 text-indigo-900" 
-                    : "bg-emerald-50 border border-emerald-200 text-emerald-900",
-                  isDragging && "z-30 shadow-lg scale-[1.02] opacity-90",
+                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none flex flex-col text-slate-900 border",
+                  isDashed ? "border-slate-500 border-dashed border-2" : "border-black/5",
+                  isDragging && "z-30 shadow-xl scale-[1.02]", // Removed opacity-90 from tailwind class to rely on style prop
                   !isDragging && "z-20 transition-[top,left,width,height] duration-200",
-                  isSelected && "ring-2 ring-indigo-500 ring-offset-1 z-30"
+                  isSelected && "ring-2 ring-slate-900 ring-offset-1 z-30"
                 )}
                 style={{
                   top: `${topPx}px`,
                   height: `${heightPx}px`,
                   left: leftStr,
                   width: widthStr,
+                  backgroundColor: bgColor,
+                  opacity: isDragging ? 0.9 : blockOpacity,
                   WebkitUserSelect: "none",
                   WebkitTouchCallout: "none"
                 }}
@@ -300,7 +313,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
                       setDragDeltaMinutes(0);
                     }}
                   >
-                    <div className="w-8 h-1 rounded-full bg-slate-400/80 shadow-sm pointer-events-none" />
+                    <div className="w-8 h-1 rounded-full bg-slate-900/40 shadow-sm pointer-events-none" />
                   </div>
                 )}
 
@@ -310,10 +323,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
                   currentDuration <= 15 ? "opacity-0" : "opacity-100"
                 )}>
                   <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight truncate">{event.title}</div>
-                  <div className={cn(
-                    "text-xs font-medium opacity-80 truncate",
-                    event.type === "plan" ? "text-indigo-700" : "text-emerald-700"
-                  )}>
+                  <div className="text-xs font-medium opacity-70 truncate">
                     {Math.floor(event.duration / 60)}h {event.duration % 60 > 0 ? `${event.duration % 60}m` : ''}
                   </div>
                 </div>
@@ -333,7 +343,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
                       setDragDeltaMinutes(0);
                     }}
                   >
-                    <div className="w-8 h-1 rounded-full bg-slate-400/80 shadow-sm pointer-events-none" />
+                    <div className="w-8 h-1 rounded-full bg-slate-900/40 shadow-sm pointer-events-none" />
                   </div>
                 )}
               </div>

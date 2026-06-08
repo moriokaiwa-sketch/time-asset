@@ -8,7 +8,19 @@ import { BlockModal } from "@/components/BlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
 
 export default function Home() {
-  const { blocks, shiftConfig, isLoaded, addBlock, updateBlock, removeBlock, setShiftConfig } = useTimeBlocks();
+  const { 
+    blocks, 
+    categories,
+    shiftConfig, 
+    isLoaded, 
+    addBlock, 
+    updateBlock, 
+    removeBlock, 
+    setShiftConfig,
+    addCategory,
+    updateCategory,
+    removeCategory
+  } = useTimeBlocks();
   
   const [activeTab, setActiveTab] = useState<"plan" | "actual">("plan");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -90,6 +102,7 @@ export default function Home() {
           startHour={shiftConfig.startHour} 
           duration={shiftConfig.duration} 
           events={blocks}
+          categories={categories}
           activeTab={activeTab}
           onUpdateBlock={updateBlock}
           onAddBlockRequest={handleAddBlockRequest}
@@ -113,6 +126,7 @@ export default function Home() {
         isOpen={isAddModalOpen} 
         onClose={closeBlockModal} 
         shiftConfig={shiftConfig}
+        categories={categories}
         initialStartOffset={initialOffset}
         editingBlock={editingBlock}
         onAdd={addBlock}
@@ -124,6 +138,10 @@ export default function Home() {
         onClose={() => setIsSettingsModalOpen(false)}
         currentConfig={shiftConfig}
         onSave={setShiftConfig}
+        categories={categories}
+        onAddCategory={addCategory}
+        onUpdateCategory={updateCategory}
+        onDeleteCategory={removeCategory}
       />
     </main>
   );
