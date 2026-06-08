@@ -87,7 +87,7 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
               placeholder="例: 会議、睡眠、休憩など"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -120,7 +120,7 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
               <select 
                 value={startHourInput} 
                 onChange={(e) => setStartHourInput(Number(e.target.value))}
-                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 {Array.from({ length: 24 }).map((_, i) => (
                   <option key={i} value={i}>{i.toString().padStart(2, '0')}時</option>
@@ -130,7 +130,7 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
               <select 
                 value={startMinuteInput} 
                 onChange={(e) => setStartMinuteInput(Number(e.target.value))}
-                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 {[0, 15, 30, 45].map((m) => (
                   <option key={m} value={m}>{m.toString().padStart(2, '0')}分</option>
@@ -146,7 +146,7 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
               <select 
                 value={durationHours} 
                 onChange={(e) => setDurationHours(Number(e.target.value))}
-                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 {Array.from({ length: 25 }).map((_, i) => (
                   <option key={i} value={i}>{i}時間</option>
@@ -155,7 +155,7 @@ export function AddBlockModal({ isOpen, onClose, shiftConfig, initialStartOffset
               <select 
                 value={durationMinutes} 
                 onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 {[0, 15, 30, 45].map((m) => (
                   <option key={m} value={m}>{m}分</option>

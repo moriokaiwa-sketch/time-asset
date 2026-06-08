@@ -48,7 +48,7 @@ export function SettingsModal({ isOpen, onClose, currentConfig, onSave }: Settin
               <select 
                 value={startHour} 
                 onChange={(e) => setStartHour(Number(e.target.value))}
-                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               >
                 {Array.from({ length: 24 }).map((_, i) => (
                   <option key={i} value={i}>
@@ -69,7 +69,7 @@ export function SettingsModal({ isOpen, onClose, currentConfig, onSave }: Settin
             <select 
               value={duration} 
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value={12}>12時間</option>
               <option value={24}>24時間</option>
