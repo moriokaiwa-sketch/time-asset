@@ -89,7 +89,7 @@ export function SettingsModal({
                 className="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider w-full text-left"
               >
                 {isShiftOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                シフト種別
+                シフト
               </button>
               
               {isShiftOpen && (
@@ -196,17 +196,16 @@ export function SettingsModal({
                     </div>
                   </div>
                 ))}
-              </div>
-
+                  </div>
               <button 
                 type="button"
                 onClick={() => onAddShiftType({ name: "新規シフト", color: "bg-slate-100 text-slate-700 border-slate-200", startHour: 9, duration: 24 })}
                 className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors active:scale-[0.98]"
               >
                 <Plus className="w-4 h-4" />
-                シフト種別を追加
+                シフトを追加
               </button>
-              </div>
+                </div>
               )}
             </div>
 
@@ -218,7 +217,7 @@ export function SettingsModal({
                 className="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider w-full text-left"
               >
                 {isCategoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                カテゴリ設定
+                カテゴリ
               </button>
               
               {isCategoryOpen && (
