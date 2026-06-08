@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Trash2, Clock } from "lucide-react";
+import { X, Trash2, Clock, Copy } from "lucide-react";
 import { ShiftConfig, TimeBlockType, TimeBlock, Category } from "@/hooks/useTimeBlocks";
 
 interface BlockModalProps {
@@ -126,6 +126,27 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
         type,
       });
     }
+    
+    onClose();
+  };
+
+  const handleCopy = () => {
+    if (!editingBlock) return;
+
+    let hourDiff = startHourInput - shiftConfig.startHour;
+    if (hourDiff < 0) {
+      hourDiff += 24;
+    }
+    const startOffset = hourDiff * 60 + startMinuteInput;
+    const duration = durationHours * 60 + durationMinutes;
+
+    onAdd({
+      title,
+      categoryId,
+      startOffset,
+      duration,
+      type,
+    });
     
     onClose();
   };
@@ -328,6 +349,15 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
           >
             {isEditing ? "SAVE" : "ADD"}
           </button>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="p-2.5 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-colors active:scale-[0.98] shrink-0 flex items-center justify-center"
+            >
+              <Copy className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
