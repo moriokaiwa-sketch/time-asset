@@ -146,7 +146,7 @@ function HomeContent() {
               activeTab === "both" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            PLAN/ACTUAL
+            BOTH
           </button>
           <button 
             onClick={() => setActiveTab("actual")}
