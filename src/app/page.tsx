@@ -42,7 +42,7 @@ function HomeContent() {
     setShiftTypeId
   } = useTimeBlocks(dateStr);
   
-  const [activeTab, setActiveTab] = useState<"plan" | "actual">("plan");
+  const [activeTab, setActiveTab] = useState<"plan" | "actual">("actual");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [initialOffset, setInitialOffset] = useState<number | undefined>(undefined);
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
