@@ -165,7 +165,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
 
             {/* Title */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-700">タイトル</label>
+              <label className="block text-sm font-bold text-slate-700">詳細</label>
               <input 
                 required
                 type="text" 
