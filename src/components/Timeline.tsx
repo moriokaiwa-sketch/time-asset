@@ -19,16 +19,22 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
   
   // Drag State
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [dragMode, setDragMode] = useState<"move" | "resizeTop" | "resizeBottom" | null>(null);
   const [dragDeltaMinutes, setDragDeltaMinutes] = useState<number>(0);
   const dragStartY = useRef<number>(0);
   const initialOffsetRef = useRef<number>(0);
+  const initialDurationRef = useRef<number>(0);
+
+  // Selection & Tap State
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const lastTapTimeRef = useRef<Record<string, number>>({});
 
   // Long Press State
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const PIXELS_PER_HOUR = 80;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
-  const SNAP_MINUTES = 5;
+  const SNAP_MINUTES = 15;
 
   const hours = Array.from({ length: duration + 1 }, (_, i) => {
     return (startHour + i) % 24;
@@ -36,7 +42,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
 
   // Handle Drag
   useEffect(() => {
-    if (!draggedBlockId) return;
+    if (!draggedBlockId || !dragMode) return;
 
     const handlePointerMove = (e: PointerEvent) => {
       e.preventDefault(); // Prevent scrolling while dragging
@@ -50,24 +56,54 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
 
     const handlePointerUp = () => {
       if (draggedBlockId && dragDeltaMinutes !== 0) {
-        let newOffset = initialOffsetRef.current + dragDeltaMinutes;
-        // Clamp to timeline boundaries
-        newOffset = Math.max(0, Math.min(newOffset, duration * 60 - 5)); // min 5 min block duration assumption
-
-        if (onUpdateBlock) {
-          onUpdateBlock(draggedBlockId, { startOffset: newOffset });
+        if (dragMode === "move") {
+          let newOffset = initialOffsetRef.current + dragDeltaMinutes;
+          // Clamp to timeline boundaries
+          newOffset = Math.max(0, Math.min(newOffset, duration * 60 - initialDurationRef.current));
+          if (onUpdateBlock) onUpdateBlock(draggedBlockId, { startOffset: newOffset });
+        } else if (dragMode === "resizeTop") {
+          let newDuration = initialDurationRef.current - dragDeltaMinutes;
+          let newOffset = initialOffsetRef.current + dragDeltaMinutes;
+          
+          if (newDuration < 15) {
+            const diff = 15 - newDuration;
+            newDuration = 15;
+            newOffset -= diff;
+          }
+          if (newOffset < 0) {
+            const diff = 0 - newOffset;
+            newOffset = 0;
+            newDuration -= diff;
+          }
+          if (onUpdateBlock) onUpdateBlock(draggedBlockId, { startOffset: newOffset, duration: newDuration });
+        } else if (dragMode === "resizeBottom") {
+          let newDuration = initialDurationRef.current + dragDeltaMinutes;
+          if (newDuration < 15) newDuration = 15;
+          if (initialOffsetRef.current + newDuration > duration * 60) {
+            newDuration = duration * 60 - initialOffsetRef.current;
+          }
+          if (onUpdateBlock) onUpdateBlock(draggedBlockId, { duration: newDuration });
         }
-      }
-      
-      // If we didn't drag at all, treat it as a click
-      if (draggedBlockId && dragDeltaMinutes === 0 && onBlockClick) {
-        const clickedEvent = events.find(e => e.id === draggedBlockId);
-        if (clickedEvent) {
-          onBlockClick(clickedEvent);
+      } else if (draggedBlockId && dragDeltaMinutes === 0 && dragMode === "move") {
+        // Tap handling
+        const now = Date.now();
+        const lastTap = lastTapTimeRef.current[draggedBlockId] || 0;
+        
+        if (now - lastTap < 300) {
+          // Double tap
+          const clickedEvent = events.find(e => e.id === draggedBlockId);
+          if (clickedEvent && onBlockClick) {
+            onBlockClick(clickedEvent);
+          }
+        } else {
+          // Single tap
+          setSelectedBlockId(draggedBlockId);
         }
+        lastTapTimeRef.current[draggedBlockId] = now;
       }
 
       setDraggedBlockId(null);
+      setDragMode(null);
       setDragDeltaMinutes(0);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
@@ -79,18 +115,21 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
-  }, [draggedBlockId, dragDeltaMinutes, duration, onUpdateBlock, onBlockClick, events]);
+  }, [draggedBlockId, dragMode, dragDeltaMinutes, duration, onUpdateBlock, onBlockClick, events]);
 
-  // Handle Background Long Press
+  // Handle Background Long Press & Background Tap
   const handleBgPointerDown = (e: React.PointerEvent) => {
     if (e.target !== containerRef.current && !(e.target as HTMLElement).classList.contains("bg-grid")) return;
     
+    // Clear selection on background tap
+    setSelectedBlockId(null);
+
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     const y = e.clientY - rect.top;
     let offsetMinutes = y / PIXELS_PER_MINUTE;
-    // Snap to 5 mins
+    // Snap
     offsetMinutes = Math.round(offsetMinutes / SNAP_MINUTES) * SNAP_MINUTES;
 
     longPressTimer.current = setTimeout(() => {
@@ -159,10 +198,37 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
             if (activeTab === "plan" && event.type === "actual") return null;
 
             const isDragging = draggedBlockId === event.id;
-            const currentOffset = isDragging ? event.startOffset + dragDeltaMinutes : event.startOffset;
+            
+            let currentOffset = event.startOffset;
+            let currentDuration = event.duration;
+
+            if (isDragging) {
+              if (dragMode === "move") {
+                currentOffset += dragDeltaMinutes;
+              } else if (dragMode === "resizeTop") {
+                currentOffset += dragDeltaMinutes;
+                currentDuration -= dragDeltaMinutes;
+                if (currentDuration < 15) {
+                  const diff = 15 - currentDuration;
+                  currentDuration = 15;
+                  currentOffset -= diff;
+                }
+                if (currentOffset < 0) {
+                  const diff = 0 - currentOffset;
+                  currentOffset = 0;
+                  currentDuration -= diff;
+                }
+              } else if (dragMode === "resizeBottom") {
+                currentDuration += dragDeltaMinutes;
+                if (currentDuration < 15) currentDuration = 15;
+                if (currentOffset + currentDuration > duration * 60) {
+                  currentDuration = duration * 60 - currentOffset;
+                }
+              }
+            }
 
             const topPx = (currentOffset / 60) * PIXELS_PER_HOUR;
-            const heightPx = (event.duration / 60) * PIXELS_PER_HOUR;
+            const heightPx = (currentDuration / 60) * PIXELS_PER_HOUR;
 
             // Layout Calculation
             const col = event.column || 0;
@@ -186,16 +252,19 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
               }
             }
 
+            const isSelected = selectedBlockId === event.id;
+
             return (
               <div
                 key={event.id}
                 className={cn(
-                  "absolute rounded-xl p-2 sm:p-3 shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing overflow-hidden pointer-events-auto select-none touch-none",
+                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none flex flex-col",
                   event.type === "plan" 
                     ? "bg-indigo-50 border border-indigo-200 text-indigo-900" 
                     : "bg-emerald-50 border border-emerald-200 text-emerald-900",
                   isDragging && "z-30 shadow-lg scale-[1.02] opacity-90",
-                  !isDragging && "z-20 transition-[top,left,width,height] duration-200"
+                  !isDragging && "z-20 transition-[top,left,width,height] duration-200",
+                  isSelected && "ring-2 ring-indigo-500 ring-offset-1 z-30"
                 )}
                 style={{
                   top: `${topPx}px`,
@@ -209,18 +278,64 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
                   e.stopPropagation();
                   (e.target as HTMLElement).releasePointerCapture(e.pointerId); // Prevent default dragging behaviors
                   setDraggedBlockId(event.id);
+                  setDragMode("move");
                   dragStartY.current = e.clientY;
                   initialOffsetRef.current = event.startOffset;
+                  initialDurationRef.current = event.duration;
                   setDragDeltaMinutes(0);
                 }}
               >
-                <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight truncate">{event.title}</div>
+                {/* Resize Handle Top */}
+                {isSelected && (
+                  <div 
+                    className="absolute top-0 left-0 right-0 h-4 flex items-center justify-center cursor-ns-resize z-40 bg-white/0"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+                      setDraggedBlockId(event.id);
+                      setDragMode("resizeTop");
+                      dragStartY.current = e.clientY;
+                      initialOffsetRef.current = event.startOffset;
+                      initialDurationRef.current = event.duration;
+                      setDragDeltaMinutes(0);
+                    }}
+                  >
+                    <div className="w-8 h-1 rounded-full bg-slate-400/80 shadow-sm pointer-events-none" />
+                  </div>
+                )}
+
+                {/* Content */}
                 <div className={cn(
-                  "text-xs font-medium opacity-80 truncate",
-                  event.type === "plan" ? "text-indigo-700" : "text-emerald-700"
+                  "flex-1 p-2 sm:p-3 overflow-hidden transition-opacity duration-200", 
+                  currentDuration <= 15 ? "opacity-0" : "opacity-100"
                 )}>
-                  {Math.floor(event.duration / 60)}h {event.duration % 60 > 0 ? `${event.duration % 60}m` : ''}
+                  <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight truncate">{event.title}</div>
+                  <div className={cn(
+                    "text-xs font-medium opacity-80 truncate",
+                    event.type === "plan" ? "text-indigo-700" : "text-emerald-700"
+                  )}>
+                    {Math.floor(event.duration / 60)}h {event.duration % 60 > 0 ? `${event.duration % 60}m` : ''}
+                  </div>
                 </div>
+
+                {/* Resize Handle Bottom */}
+                {isSelected && (
+                  <div 
+                    className="absolute bottom-0 left-0 right-0 h-4 flex items-center justify-center cursor-ns-resize z-40 bg-white/0"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+                      setDraggedBlockId(event.id);
+                      setDragMode("resizeBottom");
+                      dragStartY.current = e.clientY;
+                      initialOffsetRef.current = event.startOffset;
+                      initialDurationRef.current = event.duration;
+                      setDragDeltaMinutes(0);
+                    }}
+                  >
+                    <div className="w-8 h-1 rounded-full bg-slate-400/80 shadow-sm pointer-events-none" />
+                  </div>
+                )}
               </div>
             );
           })}
