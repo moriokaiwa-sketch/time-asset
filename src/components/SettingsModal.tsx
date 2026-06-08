@@ -100,7 +100,11 @@ export function SettingsModal({
                     <div className="flex items-center gap-2">
                       <button 
                         type="button"
-                        onClick={() => setActiveShiftColorPickerId(activeShiftColorPickerId === shift.id ? null : shift.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setActiveShiftColorPickerId(activeShiftColorPickerId === shift.id ? null : shift.id);
+                        }}
                         className={`w-10 h-10 shrink-0 rounded-lg shadow-sm border transition-transform active:scale-95 flex items-center justify-center font-bold text-xs ${shift.color}`}
                         aria-label="色を変更"
                       >
@@ -227,11 +231,17 @@ export function SettingsModal({
                     <div className="flex items-center gap-2">
                       <button 
                         type="button"
-                        onClick={() => setActiveColorPickerId(activeColorPickerId === cat.id ? null : cat.id)}
-                        className="w-10 h-10 shrink-0 rounded-lg shadow-sm border border-slate-200 transition-transform active:scale-95"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setActiveColorPickerId(activeColorPickerId === cat.id ? null : cat.id);
+                        }}
+                        className="w-10 h-10 shrink-0 rounded-lg shadow-sm border border-slate-200 transition-transform active:scale-95 flex items-center justify-center font-bold text-xs text-slate-600"
                         style={{ backgroundColor: cat.color }}
                         aria-label="色を変更"
-                      />
+                      >
+                        色
+                      </button>
                       <input 
                         type="text"
                         value={cat.name}
