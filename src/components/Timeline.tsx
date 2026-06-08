@@ -339,7 +339,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
                 {/* Content */}
                 <div className={cn(
                   "flex-1 p-2 sm:p-3 overflow-hidden transition-opacity duration-200", 
-                  currentDuration <= 15 ? "opacity-0" : "opacity-100"
+                  currentDuration <= 15 || isOverviewMode ? "opacity-0" : "opacity-100"
                 )}>
                   <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight truncate">{event.title}</div>
                   <div className="text-xs font-medium opacity-70 truncate">
