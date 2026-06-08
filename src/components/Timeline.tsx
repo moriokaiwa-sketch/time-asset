@@ -241,7 +241,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   if (totalOffsetHours <= duration) {
     currentTimeIndicator = (
       <div 
-        className="absolute left-0 right-0 flex items-center z-20 pointer-events-none"
+        className="absolute left-0 right-0 flex items-center z-30 pointer-events-none"
         style={{ top: `calc(1rem + ${totalOffsetHours * PIXELS_PER_HOUR}px)` }}
       >
         <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
@@ -287,8 +287,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
           />
         ))}
 
-        {/* Current Time Indicator */}
-        {currentTimeIndicator}
+
 
         {/* Events Container */}
         <div className="absolute top-4 left-0 right-0 bottom-4 px-2 pointer-events-none">
@@ -461,6 +460,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
             );
           })}
         </div>
+        {currentTimeIndicator}
       </div>
     </div>
   );
