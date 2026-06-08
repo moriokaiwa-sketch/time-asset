@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Timeline } from "@/components/Timeline";
-import { Clock, Calendar, Settings, LayoutGrid, ZoomIn } from "lucide-react";
+import { Clock, Calendar, Settings, Rows4, ZoomIn } from "lucide-react";
 import { useTimeBlocks, TimeBlock } from "@/hooks/useTimeBlocks";
 import { BlockModal } from "@/components/BlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
@@ -126,7 +126,7 @@ export default function Home() {
           className="pointer-events-auto absolute right-6 flex items-center justify-center p-3.5 bg-white text-slate-700 rounded-full shadow-lg shadow-slate-900/10 hover:scale-105 active:scale-95 transition-all border border-slate-100 flex-shrink-0"
           aria-label={isOverviewMode ? "詳細表示" : "全体表示"}
         >
-          {isOverviewMode ? <ZoomIn className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+          {isOverviewMode ? <ZoomIn className="w-5 h-5" /> : <Rows4 className="w-5 h-5" />}
         </button>
       </div>
 
