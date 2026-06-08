@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
+import { useAuth } from "./useAuth";
+import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 export type TimeBlockType = "plan" | "actual";
 
 export interface Category {
@@ -106,6 +108,7 @@ function calculateOverlaps(blocks: TimeBlock[]): TimeBlock[] {
 }
 
 export function useTimeBlocks() {
+  const { user } = useAuth();
   const [blocks, setBlocks] = useState<TimeBlock[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [shiftConfig, setShiftConfig] = useState<ShiftConfig>({
@@ -114,51 +117,122 @@ export function useTimeBlocks() {
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Load initial data and set up Firestore listener
   useEffect(() => {
-    try {
-      const storedBlocks = localStorage.getItem(STORAGE_KEY_BLOCKS);
-      if (storedBlocks) {
-        const parsed = JSON.parse(storedBlocks);
-        // Migration for older blocks: map 'category' string to 'categoryId'
-        const migrated = parsed.map((b: any) => {
-          if (b.category && !b.categoryId) {
-            return { ...b, categoryId: b.category };
+    if (!user) {
+      // Local Mode
+      try {
+        const storedBlocks = localStorage.getItem(STORAGE_KEY_BLOCKS);
+        if (storedBlocks) {
+          const parsed = JSON.parse(storedBlocks);
+          const migrated = parsed.map((b: any) => {
+            if (b.category && !b.categoryId) return { ...b, categoryId: b.category };
+            return b;
+          });
+          setBlocks(migrated);
+        }
+
+        const storedShift = localStorage.getItem(STORAGE_KEY_SHIFT);
+        if (storedShift) setShiftConfig(JSON.parse(storedShift));
+
+        const storedCategories = localStorage.getItem(STORAGE_KEY_CATEGORIES);
+        if (storedCategories) setCategories(JSON.parse(storedCategories));
+      } catch (e) {
+        console.error("Failed to load data from localStorage", e);
+      } finally {
+        setIsLoaded(true);
+      }
+      return;
+    }
+
+    // Cloud Mode
+    const docRef = doc(db, "users", user.uid);
+    const unsubscribe = onSnapshot(docRef, async (docSnap) => {
+      // Prevent infinite loop by ignoring snapshot events caused by our own local writes
+      if (docSnap.metadata.hasPendingWrites) return;
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setBlocks(data.blocks || []);
+        setShiftConfig(data.shiftConfig || { startHour: 21, duration: 24 });
+        setCategories(data.categories || DEFAULT_CATEGORIES);
+        setIsLoaded(true);
+      } else {
+        // First login: migrate local data to Firestore
+        try {
+          let localBlocks = [];
+          const storedBlocks = localStorage.getItem(STORAGE_KEY_BLOCKS);
+          if (storedBlocks) {
+            const parsed = JSON.parse(storedBlocks);
+            localBlocks = parsed.map((b: any) => {
+              if (b.category && !b.categoryId) return { ...b, categoryId: b.category };
+              return b;
+            });
           }
-          return b;
-        });
-        setBlocks(migrated);
-      }
 
-      const storedShift = localStorage.getItem(STORAGE_KEY_SHIFT);
-      if (storedShift) {
-        setShiftConfig(JSON.parse(storedShift));
-      }
+          let localShift = { startHour: 21, duration: 24 };
+          const storedShift = localStorage.getItem(STORAGE_KEY_SHIFT);
+          if (storedShift) localShift = JSON.parse(storedShift);
 
-      const storedCategories = localStorage.getItem(STORAGE_KEY_CATEGORIES);
-      if (storedCategories) {
-        setCategories(JSON.parse(storedCategories));
+          let localCategories = DEFAULT_CATEGORIES;
+          const storedCategories = localStorage.getItem(STORAGE_KEY_CATEGORIES);
+          if (storedCategories) localCategories = JSON.parse(storedCategories);
+
+          await setDoc(docRef, {
+            blocks: localBlocks,
+            shiftConfig: localShift,
+            categories: localCategories,
+            updatedAt: serverTimestamp()
+          });
+          
+          setBlocks(localBlocks);
+          setShiftConfig(localShift);
+          setCategories(localCategories);
+          setIsLoaded(true);
+        } catch (error) {
+          console.error("Migration failed:", error);
+          setIsLoaded(true);
+        }
       }
-    } catch (e) {
-      console.error("Failed to load data from localStorage", e);
-    } finally {
+    }, (error) => {
+      console.error("Firestore error:", error);
       setIsLoaded(true);
-    }
-  }, []);
+    });
 
-  // Save data to localStorage when they change
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY_BLOCKS, JSON.stringify(blocks));
-      localStorage.setItem(STORAGE_KEY_SHIFT, JSON.stringify(shiftConfig));
-      localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(categories));
+    return () => unsubscribe();
+  }, [user]);
+
+  const saveData = async (b: TimeBlock[], s: ShiftConfig, c: Category[]) => {
+    // Always save locally as backup
+    localStorage.setItem(STORAGE_KEY_BLOCKS, JSON.stringify(b));
+    localStorage.setItem(STORAGE_KEY_SHIFT, JSON.stringify(s));
+    localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(c));
+
+    if (user) {
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          blocks: b,
+          shiftConfig: s,
+          categories: c,
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.error("Failed to save to Firestore", error);
+      }
     }
-  }, [blocks, shiftConfig, categories, isLoaded]);
+  };
 
   const setAndProcessBlocks = (newBlocks: TimeBlock[]) => {
     const plans = calculateOverlaps(newBlocks.filter(b => b.type === "plan"));
     const actuals = calculateOverlaps(newBlocks.filter(b => b.type === "actual"));
-    setBlocks([...plans, ...actuals]);
+    const processed = [...plans, ...actuals];
+    setBlocks(processed);
+    saveData(processed, shiftConfig, categories);
+  };
+
+  const updateShiftConfig = (newConfig: ShiftConfig) => {
+    setShiftConfig(newConfig);
+    saveData(blocks, newConfig, categories);
   };
 
   const addBlock = (block: Omit<TimeBlock, "id" | "column" | "totalColumns">) => {
@@ -181,15 +255,21 @@ export function useTimeBlocks() {
 
   const addCategory = (category: Omit<Category, "id">) => {
     const newCategory = { ...category, id: crypto.randomUUID() };
-    setCategories([...categories, newCategory]);
+    const newCategories = [...categories, newCategory];
+    setCategories(newCategories);
+    saveData(blocks, shiftConfig, newCategories);
   };
 
   const updateCategory = (id: string, updates: Partial<Category>) => {
-    setCategories(categories.map(c => c.id === id ? { ...c, ...updates } : c));
+    const newCategories = categories.map(c => c.id === id ? { ...c, ...updates } : c);
+    setCategories(newCategories);
+    saveData(blocks, shiftConfig, newCategories);
   };
 
   const removeCategory = (id: string) => {
-    setCategories(categories.filter(c => c.id !== id));
+    const newCategories = categories.filter(c => c.id !== id);
+    setCategories(newCategories);
+    saveData(blocks, shiftConfig, newCategories);
   };
 
   return {
@@ -200,7 +280,7 @@ export function useTimeBlocks() {
     addBlock,
     updateBlock,
     removeBlock,
-    setShiftConfig,
+    setShiftConfig: updateShiftConfig,
     addCategory,
     updateCategory,
     removeCategory,

@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import { Timeline } from "@/components/Timeline";
-import { Clock, Calendar, Settings, Rows4, ZoomIn } from "lucide-react";
+import { Clock, Calendar, Settings, Rows4, ZoomIn, LogIn, LogOut } from "lucide-react";
 import { useTimeBlocks, TimeBlock } from "@/hooks/useTimeBlocks";
 import { BlockModal } from "@/components/BlockModal";
 import { SettingsModal } from "@/components/SettingsModal";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
+  const { user, loading, signIn, signOut } = useAuth();
   const { 
     blocks, 
     categories,
@@ -68,12 +70,25 @@ export default function Home() {
               Today's Shift: {shiftConfig.startHour.toString().padStart(2, '0')}:00 - {endHour.toString().padStart(2, '0')}:00
             </p>
           </div>
-          <button 
-            onClick={() => setIsSettingsModalOpen(true)}
-            className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {!loading && (
+              <button 
+                onClick={user ? signOut : signIn}
+                className={`p-2.5 rounded-full transition-colors active:scale-95 ${
+                  user ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+                title={user ? `Signed in as ${user.displayName}` : "Sign in to sync to cloud"}
+              >
+                {user ? <LogOut className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
+              </button>
+            )}
+            <button 
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Custom Tabs */}
