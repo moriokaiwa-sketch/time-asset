@@ -274,12 +274,14 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     現在時刻
                   </button>
                 </div>
-                <input 
-                  type="time" 
-                  value={startValue}
-                  onChange={handleStartTimeChange}
-                  className="w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block"
-                />
+                <div className="flex w-full">
+                  <input 
+                    type="time" 
+                    value={startValue}
+                    onChange={handleStartTimeChange}
+                    className="flex-1 min-w-0 w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block box-border appearance-none m-0"
+                  />
+                </div>
               </div>
 
               <div className="h-px bg-slate-200 w-full" />
@@ -287,12 +289,14 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
               {/* End Time */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">終了時間</label>
-                <input 
-                  type="time" 
-                  value={endValue}
-                  onChange={handleEndTimeChange}
-                  className="w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block"
-                />
+                <div className="flex w-full">
+                  <input 
+                    type="time" 
+                    value={endValue}
+                    onChange={handleEndTimeChange}
+                    className="flex-1 min-w-0 w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block box-border appearance-none m-0"
+                  />
+                </div>
               </div>
 
               {/* Duration */}
