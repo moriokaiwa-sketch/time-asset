@@ -103,10 +103,6 @@ function HomeContent() {
                 {displayDate}
               </span>
             </div>
-            <p className="text-sm font-medium text-slate-400 mt-1 flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              {currentShiftType.name}: {displayWorkStart} - {displayWorkEnd}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <button 
