@@ -17,7 +17,7 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("date");
-  const dateStr = dateParam || new Date().toISOString().split('T')[0];
+  const dateStr = dateParam || format(new Date(), 'yyyy-MM-dd');
   
   const { user, loading, signIn, signOut } = useAuth();
   const { 

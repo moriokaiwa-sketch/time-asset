@@ -3,6 +3,7 @@ import { useAuth } from "./useAuth";
 import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TimeBlock, TimeBlockType, DayData } from "@/types";
+import { format } from "date-fns";
 
 const STORAGE_KEY_BLOCKS_PREFIX = "time-asset-blocks-";
 const STORAGE_KEY_SHIFT_PREFIX = "time-asset-shift-";
@@ -118,7 +119,7 @@ export function useTimeBlocks(dateStr: string) {
           const storedBlocks = localStorage.getItem(`${STORAGE_KEY_BLOCKS_PREFIX}${dateStr}`);
           
           // Check for legacy global block if today
-          const isToday = new Date().toISOString().split('T')[0] === dateStr;
+          const isToday = format(new Date(), "yyyy-MM-dd") === dateStr;
           const legacyBlocksStr = localStorage.getItem("time-asset-blocks");
           
           if (storedBlocks) {
