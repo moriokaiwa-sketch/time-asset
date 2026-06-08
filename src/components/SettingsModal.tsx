@@ -4,6 +4,19 @@ import React, { useState } from "react";
 import { X, Trash2, Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { Category, ShiftType } from "@/types";
 
+const PRESET_COLORS = [
+  "#fecaca", // red-200
+  "#fed7aa", // orange-200
+  "#fef08a", // yellow-200
+  "#bbf7d0", // green-200
+  "#bfdbfe", // blue-200
+  "#dbeafe", // blue-100
+  "#c7d2fe", // indigo-200
+  "#e9d5ff", // purple-200
+  "#fbcfe8", // pink-200
+  "#e2e8f0", // slate-200
+];
+
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,6 +44,7 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [isShiftOpen, setIsShiftOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [activeColorPickerId, setActiveColorPickerId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -170,28 +184,45 @@ export function SettingsModal({
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="space-y-2">
                 {categories.map(cat => (
-                  <div key={cat.id} className="flex items-center gap-2">
-                    <div className="relative w-10 h-10 shrink-0 rounded-lg overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:border-slate-300 transition-colors">
-                      <input 
-                        type="color" 
-                        value={cat.color}
-                        onChange={(e) => onUpdateCategory(cat.id, { color: e.target.value })}
-                        className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer"
+                  <div key={cat.id} className="p-2 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setActiveColorPickerId(activeColorPickerId === cat.id ? null : cat.id)}
+                        className="w-10 h-10 shrink-0 rounded-lg shadow-sm border border-slate-200 transition-transform active:scale-95"
+                        style={{ backgroundColor: cat.color }}
+                        aria-label="色を変更"
                       />
+                      <input 
+                        type="text"
+                        value={cat.name}
+                        onChange={(e) => onUpdateCategory(cat.id, { name: e.target.value })}
+                        className="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => onDeleteCategory(cat.id)}
+                        className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
-                    <input 
-                      type="text"
-                      value={cat.name}
-                      onChange={(e) => onUpdateCategory(cat.id, { name: e.target.value })}
-                      className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                    />
-                    <button 
-                      type="button" 
-                      onClick={() => onDeleteCategory(cat.id)}
-                      className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {activeColorPickerId === cat.id && (
+                      <div className="flex flex-wrap gap-2 pt-1 pb-1 px-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        {PRESET_COLORS.map(color => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => {
+                              onUpdateCategory(cat.id, { color });
+                              setActiveColorPickerId(null);
+                            }}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform active:scale-95 ${cat.color === color ? 'border-slate-800 scale-110 shadow-md' : 'border-transparent shadow-sm'}`}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
