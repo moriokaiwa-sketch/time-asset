@@ -79,7 +79,7 @@ export function SettingsModal({
                         <select 
                           value={shift.startHour}
                           onChange={(e) => onUpdateShiftType(shift.id, { startHour: Number(e.target.value) })}
-                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
                           {Array.from({ length: 24 }).map((_, i) => (
                             <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
@@ -91,7 +91,7 @@ export function SettingsModal({
                         <select 
                           value={shift.duration}
                           onChange={(e) => onUpdateShiftType(shift.id, { duration: Number(e.target.value) })}
-                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
                         >
                           <option value={12}>12時間</option>
                           <option value={24}>24時間</option>
@@ -108,7 +108,7 @@ export function SettingsModal({
                           type="time"
                           value={shift.workStartTime ?? (shift.workStartHour != null ? `${shift.workStartHour.toString().padStart(2, '0')}:00` : `${shift.startHour.toString().padStart(2, '0')}:00`)}
                           onChange={(e) => onUpdateShiftType(shift.id, { workStartTime: e.target.value })}
-                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
                       <div className="flex-1">
@@ -117,7 +117,7 @@ export function SettingsModal({
                           type="time"
                           value={shift.workEndTime ?? (shift.workEndHour != null ? `${shift.workEndHour.toString().padStart(2, '0')}:00` : `${((shift.startHour + shift.duration) % 24).toString().padStart(2, '0')}:00`)}
                           onChange={(e) => onUpdateShiftType(shift.id, { workEndTime: e.target.value })}
-                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
                     </div>
