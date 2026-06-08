@@ -40,13 +40,9 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   useEffect(() => {
     if (typeof window !== "undefined") {
       const updateHeight = () => {
-        if (containerRef.current && containerRef.current.parentElement) {
-          // padding bottom is 96px (pb-24)
-          const parentHeight = containerRef.current.parentElement.clientHeight - 96;
-          setContainerHeight(parentHeight > 0 ? parentHeight : window.innerHeight - 200);
-        } else {
-          setContainerHeight(window.innerHeight - 200);
-        }
+        // Header height + bottom padding space is roughly 220px
+        // Use window.innerHeight strictly so it always fits the screen
+        setContainerHeight(window.innerHeight - 220);
       };
       updateHeight();
       // small delay to ensure layout is done
