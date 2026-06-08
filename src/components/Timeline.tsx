@@ -262,7 +262,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
             let blockOpacity = 1;
             let isDashed = false;
             
-            if (activeTab === "actual" && event.type === "plan") {
+            if (event.type === "plan") {
               blockOpacity = 0.4;
               isDashed = true;
             }
