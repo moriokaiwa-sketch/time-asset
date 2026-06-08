@@ -57,7 +57,9 @@ export default function CalendarPage() {
 
     try {
       // 1. Find template blocks
-      const templateBlocks = await getTemplateBlocks(user ? user.uid : null, stampShiftId, dateStr);
+      const shift = shiftTypes.find(s => s.id === stampShiftId);
+      if (!shift) throw new Error("Shift not found");
+      const templateBlocks = await getTemplateBlocks(user ? user.uid : null, shift, dateStr);
 
       // 2. Save data
       if (!user) {

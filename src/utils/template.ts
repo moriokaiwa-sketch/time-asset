@@ -1,12 +1,12 @@
 import { collection, query, where, getDocs, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { TimeBlock } from "@/types";
+import { TimeBlock, ShiftType } from "@/types";
 
 /**
  * Copies the PLAN blocks from the most recent past date that had the same shiftTypeId.
  * Returns the blocks array to be saved.
  */
-export async function getTemplateBlocks(userId: string | null, shiftTypeId: string, targetDateStr: string): Promise<TimeBlock[]> {
+export async function getTemplateBlocks(userId: string | null, shiftType: ShiftType, targetDateStr: string): Promise<TimeBlock[]> {
   if (!userId) {
     // Local Mode: Search all localStorage keys for time-asset-shift-*
     let mostRecentDate = "";
@@ -15,7 +15,7 @@ export async function getTemplateBlocks(userId: string | null, shiftTypeId: stri
       const key = localStorage.key(i);
       if (key && key.startsWith("time-asset-shift-")) {
         const storedShiftId = localStorage.getItem(key);
-        if (storedShiftId === shiftTypeId) {
+        if (storedShiftId === shiftType.id) {
           const dateStr = key.replace("time-asset-shift-", "");
           if (dateStr < targetDateStr && dateStr > mostRecentDate) {
             // Check if it has PLAN blocks
@@ -54,7 +54,7 @@ export async function getTemplateBlocks(userId: string | null, shiftTypeId: stri
     // Unfortunately, querying by __name__ with < and ordering by __name__ descending along with where("shiftTypeId", "==") requires a composite index.
     // To avoid making the user create an index, we can just fetch all documents with this shiftTypeId (which should be small) and find the closest one in memory.
     
-    const q = query(daysRef, where("shiftTypeId", "==", shiftTypeId));
+    const q = query(daysRef, where("shiftTypeId", "==", shiftType.id));
     const snapshot = await getDocs(q);
     
     let mostRecentDate = "";
@@ -81,6 +81,33 @@ export async function getTemplateBlocks(userId: string | null, shiftTypeId: stri
     return [];
   } catch (error) {
     console.error("Failed to fetch template blocks:", error);
-    return [];
   }
+
+  // Fallback: If no template was found, auto-generate a "Work" (仕事) block
+  if (shiftType.workStartTime && shiftType.workEndTime) {
+    const [startH, startM] = shiftType.workStartTime.split(':').map(Number);
+    const [endH, endM] = shiftType.workEndTime.split(':').map(Number);
+    
+    let workStartHourDiff = startH - shiftType.startHour;
+    if (workStartHourDiff < 0) workStartHourDiff += 24;
+    const startOffset = workStartHourDiff * 60 + startM;
+
+    let workEndHourDiff = endH - startH;
+    if (workEndHourDiff < 0) workEndHourDiff += 24;
+    if (workEndHourDiff === 0 && endM < startM) workEndHourDiff += 24;
+    const duration = workEndHourDiff * 60 + endM - startM;
+
+    if (duration > 0) {
+      return [{
+        id: crypto.randomUUID(),
+        title: "仕事",
+        categoryId: "仕事", // Use the name as categoryId to match DEFAULT_CATEGORIES
+        type: "plan",
+        startOffset,
+        duration,
+      }];
+    }
+  }
+
+  return [];
 }
