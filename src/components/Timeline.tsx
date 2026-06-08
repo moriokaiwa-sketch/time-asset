@@ -66,9 +66,13 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   useEffect(() => {
     if (!draggedBlockId || !dragMode) return;
 
-    const handlePointerMove = (e: PointerEvent) => {
-      e.preventDefault(); // Prevent scrolling while dragging
-      const deltaY = e.clientY - dragStartY.current;
+    let totalScrolled = 0;
+    let currentClientY = dragStartY.current;
+    let autoScrollRaf: number | null = null;
+    let lastScrollTime = performance.now();
+
+    const updateDragDelta = () => {
+      const deltaY = (currentClientY - dragStartY.current) + totalScrolled;
       let deltaMin = Math.round(deltaY / PIXELS_PER_MINUTE);
       
       // Snap to SNAP_MINUTES
@@ -76,7 +80,63 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
       setDragDeltaMinutes(deltaMin);
     };
 
+    const handlePointerMove = (e: PointerEvent) => {
+      e.preventDefault(); // Prevent scrolling while dragging
+      currentClientY = e.clientY;
+      updateDragDelta();
+    };
+
+    const doAutoScroll = (time: number) => {
+      const dt = time - lastScrollTime;
+      lastScrollTime = time;
+
+      const edgeSize = 120; // pixels from top or bottom to trigger scroll
+      const maxScrollSpeed = 0.8; // pixels per ms
+      
+      let scrollY = 0;
+      
+      if (currentClientY < edgeSize) {
+        // Scroll up
+        const intensity = Math.min(1.5, Math.max(0, (edgeSize - currentClientY) / edgeSize));
+        scrollY = -maxScrollSpeed * intensity * dt;
+      } else if (currentClientY > window.innerHeight - edgeSize) {
+        // Scroll down
+        const intensity = Math.min(1.5, Math.max(0, (currentClientY - (window.innerHeight - edgeSize)) / edgeSize));
+        scrollY = maxScrollSpeed * intensity * dt;
+      }
+
+      if (scrollY !== 0 && dt < 100) { // dt < 100 to prevent huge jumps if tab was inactive
+        const scrollContainer = document.querySelector('.overflow-y-auto') || document.documentElement;
+        
+        let actualScrolled = 0;
+        if (scrollContainer === document.documentElement) {
+          const prevScrollY = window.scrollY;
+          window.scrollBy(0, scrollY);
+          actualScrolled = window.scrollY - prevScrollY;
+        } else {
+          const el = scrollContainer as HTMLElement;
+          const prevScrollTop = el.scrollTop;
+          el.scrollBy(0, scrollY);
+          actualScrolled = el.scrollTop - prevScrollTop;
+        }
+
+        if (actualScrolled !== 0) {
+          totalScrolled += actualScrolled;
+          updateDragDelta();
+        }
+      }
+      
+      autoScrollRaf = requestAnimationFrame(doAutoScroll);
+    };
+
+    autoScrollRaf = requestAnimationFrame((time) => {
+      lastScrollTime = time;
+      doAutoScroll(time);
+    });
+
     const handlePointerUp = () => {
+      if (autoScrollRaf) cancelAnimationFrame(autoScrollRaf);
+
       if (draggedBlockId && dragDeltaMinutes !== 0) {
         if (dragMode === "move") {
           let newOffset = initialOffsetRef.current + dragDeltaMinutes;
@@ -118,6 +178,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
     window.addEventListener("pointermove", handlePointerMove, { passive: false });
     window.addEventListener("pointerup", handlePointerUp);
     return () => {
+      if (autoScrollRaf) cancelAnimationFrame(autoScrollRaf);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
