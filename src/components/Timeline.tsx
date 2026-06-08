@@ -38,6 +38,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
     if (!draggedBlockId) return;
 
     const handlePointerMove = (e: PointerEvent) => {
+      e.preventDefault(); // Prevent scrolling while dragging
       const deltaY = e.clientY - dragStartY.current;
       let deltaMin = Math.round(deltaY / PIXELS_PER_MINUTE);
       
@@ -62,7 +63,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
       window.removeEventListener("pointerup", handlePointerUp);
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
     window.addEventListener("pointerup", handlePointerUp);
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
@@ -97,7 +98,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
   };
 
   return (
-    <div className="relative w-full flex bg-white/50 backdrop-blur-xl rounded-t-3xl shadow-[0_-8px_30px_rgb(0,0,0,0.04)] overflow-hidden min-h-[calc(100vh-140px)] touch-none">
+    <div className="relative w-full flex bg-white/50 backdrop-blur-xl rounded-t-3xl shadow-[0_-8px_30px_rgb(0,0,0,0.04)] overflow-hidden min-h-[calc(100vh-140px)] select-none touch-none" style={{ WebkitUserSelect: "none", WebkitTouchCallout: "none" }}>
       {/* Time Axis */}
       <div className="w-16 flex-shrink-0 border-r border-slate-100/80 bg-white/80 py-4 z-10 pointer-events-none">
         {hours.map((hour, index) => (
@@ -179,7 +180,7 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
               <div
                 key={event.id}
                 className={cn(
-                  "absolute rounded-xl p-2 sm:p-3 shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing overflow-hidden pointer-events-auto",
+                  "absolute rounded-xl p-2 sm:p-3 shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing overflow-hidden pointer-events-auto select-none",
                   event.type === "plan" 
                     ? "bg-indigo-50 border border-indigo-200 text-indigo-900" 
                     : "bg-emerald-50 border border-emerald-200 text-emerald-900",
@@ -191,9 +192,12 @@ export function Timeline({ startHour, duration, events = [], activeTab, onUpdate
                   height: `${heightPx}px`,
                   left: leftStr,
                   width: widthStr,
+                  WebkitUserSelect: "none",
+                  WebkitTouchCallout: "none"
                 }}
                 onPointerDown={(e) => {
                   e.stopPropagation();
+                  (e.target as HTMLElement).releasePointerCapture(e.pointerId); // Prevent default dragging behaviors
                   setDraggedBlockId(event.id);
                   dragStartY.current = e.clientY;
                   initialOffsetRef.current = event.startOffset;
