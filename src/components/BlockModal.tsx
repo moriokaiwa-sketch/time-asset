@@ -10,13 +10,14 @@ interface BlockModalProps {
   shiftConfig: ShiftConfig;
   categories: Category[];
   initialStartOffset?: number;
+  initialType?: TimeBlockType;
   editingBlock?: TimeBlock | null;
   onAdd: (block: Omit<TimeBlock, "id" | "column" | "totalColumns">) => void;
   onUpdate?: (id: string, updates: Partial<TimeBlock>) => void;
   onDelete?: (id: string) => void;
 }
 
-export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialStartOffset, editingBlock, onAdd, onUpdate, onDelete }: BlockModalProps) {
+export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialStartOffset, initialType = "plan", editingBlock, onAdd, onUpdate, onDelete }: BlockModalProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
   const [categoryId, setCategoryId] = useState("");
@@ -49,7 +50,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setStartHourInput((shiftConfig.startHour + h) % 24);
       setStartMinuteInput(m);
       setTitle("");
-      setType("plan");
+      setType(initialType);
       setCategoryId(categories[0]?.id || "");
       setDurationHours(1);
       setDurationMinutes(0);
@@ -57,12 +58,12 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setStartHourInput(shiftConfig.startHour);
       setStartMinuteInput(0);
       setTitle("");
-      setType("plan");
+      setType(initialType);
       setCategoryId(categories[0]?.id || "");
       setDurationHours(1);
       setDurationMinutes(0);
     }
-  }, [isOpen, initialStartOffset, shiftConfig.startHour, editingBlock, categories]);
+  }, [isOpen, initialStartOffset, shiftConfig.startHour, editingBlock, categories, initialType]);
 
   if (!isOpen) return null;
 

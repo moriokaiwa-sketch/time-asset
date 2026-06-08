@@ -191,6 +191,7 @@ function HomeContent() {
         shiftConfig={shiftConfig}
         categories={categories}
         initialStartOffset={initialOffset}
+        initialType={activeTab}
         editingBlock={editingBlock}
         onAdd={addBlock}
         onUpdate={updateBlock}
