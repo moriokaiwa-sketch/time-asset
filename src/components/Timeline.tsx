@@ -230,25 +230,24 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   };
 
   let currentTimeIndicator = null;
-  if (dateStr) {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const timelineStart = new Date(year, month - 1, day, startHour, 0, 0);
-    const timelineEnd = new Date(timelineStart.getTime() + duration * 60 * 60 * 1000);
-    
-    if (now >= timelineStart && now <= timelineEnd) {
-      const diffMs = now.getTime() - timelineStart.getTime();
-      const totalOffsetHours = diffMs / (1000 * 60 * 60);
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  
+  let hoursOffset = currentHour - startHour;
+  if (hoursOffset < 0) hoursOffset += 24;
+  
+  const totalOffsetHours = hoursOffset + (currentMinute / 60);
 
-      currentTimeIndicator = (
-        <div 
-          className="absolute left-0 right-0 flex items-center z-20 pointer-events-none"
-          style={{ top: `calc(1rem + ${totalOffsetHours * PIXELS_PER_HOUR}px)` }}
-        >
-          <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-          <div className="h-[1px] flex-1 bg-blue-500/60" />
-        </div>
-      );
-    }
+  if (totalOffsetHours <= duration) {
+    currentTimeIndicator = (
+      <div 
+        className="absolute left-0 right-0 flex items-center z-20 pointer-events-none"
+        style={{ top: `calc(1rem + ${totalOffsetHours * PIXELS_PER_HOUR}px)` }}
+      >
+        <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+        <div className="h-[1px] flex-1 bg-blue-500/60" />
+      </div>
+    );
   }
 
   return (
