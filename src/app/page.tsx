@@ -119,7 +119,6 @@ export default function Home() {
             onClick={() => { setEditingBlock(null); setInitialOffset(undefined); setIsAddModalOpen(true); }}
             className="flex items-center justify-center gap-2 bg-slate-900 text-white px-7 py-4 rounded-full font-bold shadow-xl shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
           >
-            <Clock className="w-5 h-5" />
             Add Block
           </button>
 
