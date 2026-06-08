@@ -75,7 +75,7 @@ export function SettingsModal({
                     </div>
                     <div className="flex gap-2">
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 mb-1">開始時間</label>
+                        <label className="block text-xs font-bold text-slate-500 mb-1">画面表示の開始</label>
                         <select 
                           value={shift.startHour}
                           onChange={(e) => onUpdateShiftType(shift.id, { startHour: Number(e.target.value) })}
@@ -87,7 +87,7 @@ export function SettingsModal({
                         </select>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 mb-1">表示長さ</label>
+                        <label className="block text-xs font-bold text-slate-500 mb-1">画面の長さ</label>
                         <select 
                           value={shift.duration}
                           onChange={(e) => onUpdateShiftType(shift.id, { duration: Number(e.target.value) })}
@@ -96,6 +96,34 @@ export function SettingsModal({
                           <option value={12}>12時間</option>
                           <option value={24}>24時間</option>
                           <option value={48}>48時間</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {/* 勤務時間設定 */}
+                    <div className="pt-2 border-t border-slate-100 flex gap-2">
+                      <div className="flex-1">
+                        <label className="block text-xs font-bold text-slate-500 mb-1">勤務開始</label>
+                        <select 
+                          value={shift.workStartHour ?? shift.startHour}
+                          onChange={(e) => onUpdateShiftType(shift.id, { workStartHour: Number(e.target.value) })}
+                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs font-bold text-slate-500 mb-1">勤務終了</label>
+                        <select 
+                          value={shift.workEndHour ?? (shift.startHour + shift.duration) % 24}
+                          onChange={(e) => onUpdateShiftType(shift.id, { workEndHour: Number(e.target.value) })}
+                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                        >
+                          {Array.from({ length: 24 }).map((_, i) => (
+                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+                          ))}
                         </select>
                       </div>
                     </div>
