@@ -82,6 +82,25 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     setDurationMinutes(diff % 60);
   };
 
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.value) return;
+    const [h, m] = e.target.value.split(':').map(Number);
+    setStartHourInput(h);
+    setStartMinuteInput(m);
+  };
+
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.value) return;
+    const [h, m] = e.target.value.split(':').map(Number);
+    handleEndChange(h, m);
+  };
+
+  const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const totalMins = Number(e.target.value);
+    setDurationHours(Math.floor(totalMins / 60));
+    setDurationMinutes(totalMins % 60);
+  };
+
   const handleSetNow = () => {
     const now = new Date();
     let h = now.getHours();
@@ -101,7 +120,6 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Calculate startOffset
     let hourDiff = startHourInput - shiftConfig.startHour;
     if (hourDiff < 0) {
       hourDiff += 24;
@@ -109,24 +127,13 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     const startOffset = hourDiff * 60 + startMinuteInput;
     const duration = durationHours * 60 + durationMinutes;
 
+    const blockData = { title, categoryId, startOffset, duration, type };
+
     if (editingBlock && onUpdate) {
-      onUpdate(editingBlock.id, {
-        title,
-        categoryId,
-        startOffset,
-        duration,
-        type,
-      });
+      onUpdate(editingBlock.id, blockData);
     } else {
-      onAdd({
-        title,
-        categoryId,
-        startOffset,
-        duration,
-        type,
-      });
+      onAdd(blockData);
     }
-    
     onClose();
   };
 
@@ -140,14 +147,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     const startOffset = hourDiff * 60 + startMinuteInput;
     const duration = durationHours * 60 + durationMinutes;
 
-    onAdd({
-      title,
-      categoryId,
-      startOffset,
-      duration,
-      type,
-    });
-    
+    onAdd({ title, categoryId, startOffset, duration, type });
     onClose();
   };
 
@@ -159,6 +159,22 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   };
 
   const isEditing = !!editingBlock;
+
+  // Format times for input[type="time"]
+  const startValue = `${startHourInput.toString().padStart(2, '0')}:${startMinuteInput.toString().padStart(2, '0')}`;
+  const endValue = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+
+  // Generate duration options (every 5 mins up to 24 hours)
+  const durationOptions = [];
+  for (let i = 5; i <= 24 * 60; i += 5) {
+    const h = Math.floor(i / 60);
+    const m = i % 60;
+    let label = '';
+    if (h > 0) label += `${h}時間`;
+    if (m > 0) label += `${m.toString().padStart(2, '0')}分`;
+    if (h > 0 && m === 0) label = `${h}時間`;
+    durationOptions.push({ value: i, label });
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-slate-900/40 backdrop-blur-sm">
@@ -245,29 +261,12 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     現在時刻
                   </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select 
-                    value={startHourInput} 
-                    onChange={(e) => setStartHourInput(Number(e.target.value))}
-                    className="flex-1 p-2 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <option key={i} value={i}>{i.toString().padStart(2, '0')}</option>
-                    ))}
-                  </select>
-                  <span className="font-black text-slate-300 text-lg pb-0.5">:</span>
-                  <select 
-                    value={startMinuteInput} 
-                    onChange={(e) => setStartMinuteInput(Number(e.target.value))}
-                    className="flex-1 p-2 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                      <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
-                    ))}
-                  </select>
-                </div>
+                <input 
+                  type="time" 
+                  value={startValue}
+                  onChange={handleStartTimeChange}
+                  className="w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block"
+                />
               </div>
 
               <div className="h-px bg-slate-200 w-full" />
@@ -275,56 +274,27 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
               {/* End Time */}
               <div className="space-y-1.5">
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">終了時間</label>
-                <div className="flex items-center gap-2">
-                  <select 
-                    value={endHour} 
-                    onChange={(e) => handleEndChange(Number(e.target.value), endMinute)}
-                    className="flex-1 p-2 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <option key={i} value={i}>{i.toString().padStart(2, '0')}</option>
-                    ))}
-                  </select>
-                  <span className="font-black text-slate-300 text-lg pb-0.5">:</span>
-                  <select 
-                    value={endMinute} 
-                    onChange={(e) => handleEndChange(endHour, Number(e.target.value))}
-                    className="flex-1 p-2 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                      <option key={m} value={m}>{m.toString().padStart(2, '0')}</option>
-                    ))}
-                  </select>
-                </div>
+                <input 
+                  type="time" 
+                  value={endValue}
+                  onChange={handleEndTimeChange}
+                  className="w-full p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center block"
+                />
               </div>
 
               {/* Duration */}
               <div className="space-y-1.5 pt-1">
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">所要時間</label>
-                <div className="flex items-center gap-2">
-                  <select 
-                    value={durationHours} 
-                    onChange={(e) => setDurationHours(Number(e.target.value))}
-                    className="flex-1 p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {Array.from({ length: 25 }).map((_, i) => (
-                      <option key={i} value={i}>{i}時間</option>
-                    ))}
-                  </select>
-                  <select 
-                    value={durationMinutes} 
-                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    className="flex-1 p-2 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
-                    style={{ textAlignLast: 'center' }}
-                  >
-                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                      <option key={m} value={m}>{m}分</option>
-                    ))}
-                  </select>
-                </div>
+                <select 
+                  value={totalDurationMinutes} 
+                  onChange={handleDurationChange}
+                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center appearance-none"
+                  style={{ textAlignLast: 'center' }}
+                >
+                  {durationOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
 
             </div>
