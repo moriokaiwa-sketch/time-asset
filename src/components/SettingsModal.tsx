@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Trash2, Plus } from "lucide-react";
+import { X, Trash2, Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { Category, ShiftType } from "@/types";
 
 interface SettingsModalProps {
@@ -29,6 +29,9 @@ export function SettingsModal({
   onUpdateShiftType,
   onDeleteShiftType
 }: SettingsModalProps) {
+  const [isShiftOpen, setIsShiftOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
   if (!isOpen) return null;
 
   return (
@@ -52,9 +55,18 @@ export function SettingsModal({
             
             {/* Shift Settings */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">シフト種別</h3>
+              <button 
+                type="button"
+                onClick={() => setIsShiftOpen(!isShiftOpen)}
+                className="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider w-full text-left"
+              >
+                {isShiftOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                シフト種別
+              </button>
               
-              <div className="space-y-3">
+              {isShiftOpen && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-3">
                 {shiftTypes.map(shift => (
                   <div key={shift.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                     <div className="flex items-center gap-2">
@@ -139,13 +151,24 @@ export function SettingsModal({
                 <Plus className="w-4 h-4" />
                 シフト種別を追加
               </button>
+              </div>
+              )}
             </div>
 
             {/* Category Settings */}
             <div className="space-y-4 pt-6 border-t border-slate-100">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">カテゴリ設定</h3>
+              <button 
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="flex items-center gap-2 text-sm font-bold text-slate-400 uppercase tracking-wider w-full text-left"
+              >
+                {isCategoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                カテゴリ設定
+              </button>
               
-              <div className="space-y-2">
+              {isCategoryOpen && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-2">
                 {categories.map(cat => (
                   <div key={cat.id} className="flex items-center gap-2">
                     <div className="relative w-10 h-10 shrink-0 rounded-lg overflow-hidden border border-slate-200 shadow-sm cursor-pointer hover:border-slate-300 transition-colors">
@@ -181,6 +204,8 @@ export function SettingsModal({
                 <Plus className="w-4 h-4" />
                 カテゴリを追加
               </button>
+              </div>
+              )}
             </div>
 
           </div>
