@@ -86,21 +86,8 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
           if (onUpdateBlock) onUpdateBlock(draggedBlockId, { duration: newDuration });
         }
       } else if (draggedBlockId && dragDeltaMinutes === 0 && dragMode === "move") {
-        // Tap handling
-        const now = Date.now();
-        const lastTap = lastTapTimeRef.current[draggedBlockId] || 0;
-        
-        if (now - lastTap < 300) {
-          // Double tap
-          const clickedEvent = events.find(e => e.id === draggedBlockId);
-          if (clickedEvent && onBlockClick) {
-            onBlockClick(clickedEvent);
-          }
-        } else {
-          // Single tap
-          setSelectedBlockId(draggedBlockId);
-        }
-        lastTapTimeRef.current[draggedBlockId] = now;
+        // The pointer was released without moving on a selected block.
+        // We will let the onClick handler deal with the tap/double-tap logic.
       }
 
       setDraggedBlockId(null);
@@ -269,7 +256,8 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
               <div
                 key={event.id}
                 className={cn(
-                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none flex flex-col text-slate-900 border border-black/5",
+                  "absolute rounded-xl shadow-sm transition-transform active:scale-[0.98] cursor-grab active:cursor-grabbing pointer-events-auto select-none flex flex-col text-slate-900 border border-black/5",
+                  isSelected ? "touch-none" : "touch-pan-y",
                   isDragging && "z-30 shadow-xl scale-[1.02]", // Removed opacity-90 from tailwind class to rely on style prop
                   !isDragging && "z-20 transition-[top,left,width,height] duration-200",
                   isSelected && "ring-2 ring-slate-900 ring-offset-1 z-30"
@@ -285,14 +273,30 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
                   WebkitTouchCallout: "none"
                 }}
                 onPointerDown={(e) => {
+                  if (isSelected) {
+                    e.stopPropagation();
+                    (e.target as HTMLElement).releasePointerCapture(e.pointerId); // Prevent default dragging behaviors
+                    setDraggedBlockId(event.id);
+                    setDragMode("move");
+                    dragStartY.current = e.clientY;
+                    initialOffsetRef.current = event.startOffset;
+                    initialDurationRef.current = event.duration;
+                    setDragDeltaMinutes(0);
+                  }
+                }}
+                onClick={(e) => {
                   e.stopPropagation();
-                  (e.target as HTMLElement).releasePointerCapture(e.pointerId); // Prevent default dragging behaviors
-                  setDraggedBlockId(event.id);
-                  setDragMode("move");
-                  dragStartY.current = e.clientY;
-                  initialOffsetRef.current = event.startOffset;
-                  initialDurationRef.current = event.duration;
-                  setDragDeltaMinutes(0);
+                  if (isDragging && dragDeltaMinutes !== 0) return;
+
+                  const now = Date.now();
+                  const lastTap = lastTapTimeRef.current[event.id] || 0;
+                  
+                  if (now - lastTap < 300) {
+                    if (onBlockClick) onBlockClick(event);
+                  } else {
+                    setSelectedBlockId(event.id);
+                  }
+                  lastTapTimeRef.current[event.id] = now;
                 }}
               >
                 {/* Resize Handle Top */}
