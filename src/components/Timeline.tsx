@@ -10,7 +10,7 @@ interface TimelineProps {
   duration: number; // in hours
   events?: TimeBlock[];
   categories?: Category[];
-  activeTab: "plan" | "actual";
+  activeTab: "plan" | "both" | "actual";
   onUpdateBlock?: (id: string, updates: Partial<TimeBlock>) => void;
   onAddBlockRequest?: (startOffset: number) => void;
   onBlockClick?: (block: TimeBlock) => void;
@@ -294,6 +294,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
         <div className="absolute top-4 left-0 right-0 bottom-4 px-2 pointer-events-none">
           {events.map((event) => {
             if (activeTab === "plan" && event.type === "actual") return null;
+            if (activeTab === "actual" && event.type === "plan") return null;
 
             const isDragging = draggedBlockId === event.id;
             
@@ -335,11 +336,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
             let leftStr = "0.5rem";
             let widthStr = "calc(100% - 1rem)";
 
-            if (activeTab === "plan") {
-              widthStr = `calc((100% - 1rem) / ${totalCols})`;
-              leftStr = `calc(0.5rem + (100% - 1rem) * ${col} / ${totalCols})`;
-            } else {
-              // activeTab === "actual"
+            if (activeTab === "both") {
               const halfWidth = "calc(50% - 0.5rem)";
               if (event.type === "plan") {
                 widthStr = `calc(${halfWidth} / ${totalCols})`;
@@ -348,6 +345,9 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
                 widthStr = `calc(${halfWidth} / ${totalCols})`;
                 leftStr = `calc(50% + 0.25rem + ${halfWidth} * ${col} / ${totalCols})`;
               }
+            } else {
+              widthStr = `calc((100% - 1rem) / ${totalCols})`;
+              leftStr = `calc(0.5rem + (100% - 1rem) * ${col} / ${totalCols})`;
             }
 
             const isSelected = selectedBlockId === event.id;

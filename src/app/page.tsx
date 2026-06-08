@@ -42,7 +42,7 @@ function HomeContent() {
     setShiftTypeId
   } = useTimeBlocks(dateStr);
   
-  const [activeTab, setActiveTab] = useState<"plan" | "actual">("actual");
+  const [activeTab, setActiveTab] = useState<"plan" | "both" | "actual">("actual");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [initialOffset, setInitialOffset] = useState<number | undefined>(undefined);
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
@@ -131,7 +131,7 @@ function HomeContent() {
         </div>
 
         {/* Custom Tabs */}
-        <div className="flex p-1 bg-slate-100/80 rounded-2xl">
+        <div className="flex p-1 bg-slate-100/80 rounded-2xl mb-4">
           <button 
             onClick={() => setActiveTab("plan")}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${
@@ -139,6 +139,14 @@ function HomeContent() {
             }`}
           >
             PLAN
+          </button>
+          <button 
+            onClick={() => setActiveTab("both")}
+            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${
+              activeTab === "both" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            PLAN/ACTUAL
           </button>
           <button 
             onClick={() => setActiveTab("actual")}
@@ -191,7 +199,7 @@ function HomeContent() {
         shiftConfig={shiftConfig}
         categories={categories}
         initialStartOffset={initialOffset}
-        initialType={activeTab}
+        initialType={activeTab === "both" ? "actual" : activeTab}
         editingBlock={editingBlock}
         onAdd={addBlock}
         onUpdate={updateBlock}
