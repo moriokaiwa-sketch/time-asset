@@ -4,12 +4,12 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO } from "date-fns";
 import { ja } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon, Check, Eraser } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { useMonthlyDays } from "@/hooks/useMonthlyDays";
 import { getTemplateBlocks } from "@/utils/template";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function CalendarPage() {
@@ -56,6 +56,20 @@ export default function CalendarPage() {
     setIsProcessing(true);
 
     try {
+      // Handle Eraser Mode
+      if (stampShiftId === "delete") {
+        if (!user) {
+          localStorage.removeItem(`time-asset-shift-${dateStr}`);
+          localStorage.removeItem(`time-asset-blocks-${dateStr}`);
+          window.dispatchEvent(new Event("storage"));
+        } else {
+          const docRef = doc(db, "users", user.uid, "days", dateStr);
+          await deleteDoc(docRef);
+        }
+        setIsProcessing(false);
+        return;
+      }
+
       // 1. Find template blocks
       const shift = shiftTypes.find(s => s.id === stampShiftId);
       if (!shift) throw new Error("Shift not found");
@@ -218,6 +232,21 @@ export default function CalendarPage() {
               </button>
             );
           })}
+          
+          <div className="w-[1px] h-8 bg-slate-200 self-center mx-1 flex-shrink-0" />
+          
+          <button
+            onClick={() => setStampShiftId(stampShiftId === "delete" ? null : "delete")}
+            className={`flex-shrink-0 snap-start flex items-center gap-1.5 px-4 py-3 rounded-2xl border-2 transition-all active:scale-95 ${
+              stampShiftId === "delete"
+                ? "border-red-500 bg-red-50 text-red-700 shadow-md shadow-red-100" 
+                : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"
+            }`}
+          >
+            <Eraser className="w-4 h-4" />
+            <span className="font-bold text-sm">消しゴム</span>
+            {stampShiftId === "delete" && <Check className="w-4 h-4 ml-1" />}
+          </button>
         </div>
       </div>
       
