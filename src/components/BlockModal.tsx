@@ -164,9 +164,9 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   const startValue = `${startHourInput.toString().padStart(2, '0')}:${startMinuteInput.toString().padStart(2, '0')}`;
   const endValue = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
 
-  // Generate duration options (every 5 mins up to 24 hours)
+  // Generate duration options (every 5 mins up to 1 hour)
   const durationOptions = [];
-  for (let i = 5; i <= 24 * 60; i += 5) {
+  for (let i = 5; i <= 60; i += 5) {
     const h = Math.floor(i / 60);
     const m = i % 60;
     let label = '';
@@ -174,6 +174,19 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     if (m > 0) label += `${m.toString().padStart(2, '0')}分`;
     if (h > 0 && m === 0) label = `${h}時間`;
     durationOptions.push({ value: i, label });
+  }
+
+  // If the current duration is not in the generated list, append it so the select UI doesn't break
+  if (!durationOptions.find(opt => opt.value === totalDurationMinutes)) {
+    const h = Math.floor(totalDurationMinutes / 60);
+    const m = totalDurationMinutes % 60;
+    let label = '';
+    if (h > 0) label += `${h}時間`;
+    if (m > 0) label += `${m.toString().padStart(2, '0')}分`;
+    if (h > 0 && m === 0) label = `${h}時間`;
+    if (totalDurationMinutes === 0) label = "0分";
+    durationOptions.push({ value: totalDurationMinutes, label });
+    durationOptions.sort((a, b) => a.value - b.value);
   }
 
   return (
