@@ -113,22 +113,24 @@ export default function Home() {
       </div>
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
-        <button
-          onClick={() => setIsOverviewMode(!isOverviewMode)}
-          className="flex items-center justify-center p-4 bg-white text-slate-700 rounded-full shadow-lg shadow-slate-900/10 hover:scale-105 active:scale-95 transition-all border border-slate-100"
-          aria-label={isOverviewMode ? "詳細表示" : "全体表示"}
-        >
-          {isOverviewMode ? <ZoomIn className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-        </button>
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-3 w-full max-w-sm px-4 pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <button 
+            onClick={() => { setEditingBlock(null); setInitialOffset(undefined); setIsAddModalOpen(true); }}
+            className="flex items-center justify-center gap-2 bg-slate-900 text-white px-7 py-4 rounded-full font-bold shadow-xl shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+          >
+            <Clock className="w-5 h-5" />
+            Add Block
+          </button>
 
-        <button 
-          onClick={() => { setEditingBlock(null); setInitialOffset(undefined); setIsAddModalOpen(true); }}
-          className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-full font-bold shadow-lg shadow-slate-900/20 hover:scale-105 active:scale-95 transition-all"
-        >
-          <Clock className="w-5 h-5" />
-          Add Block
-        </button>
+          <button
+            onClick={() => setIsOverviewMode(!isOverviewMode)}
+            className="flex items-center justify-center p-3.5 bg-white text-slate-700 rounded-full shadow-lg shadow-slate-900/10 hover:scale-105 active:scale-95 transition-all border border-slate-100 flex-shrink-0"
+            aria-label={isOverviewMode ? "詳細表示" : "全体表示"}
+          >
+            {isOverviewMode ? <ZoomIn className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Modals */}
