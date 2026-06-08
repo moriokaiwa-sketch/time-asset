@@ -63,8 +63,11 @@ function HomeContent() {
   const endHour = (shiftConfig.startHour + shiftConfig.duration) % 24;
   
   // Calculate work hours for display
-  const workStartHour = currentShiftType.workStartHour ?? shiftConfig.startHour;
-  const workEndHour = currentShiftType.workEndHour ?? endHour;
+  const legacyStart = currentShiftType.workStartHour ?? shiftConfig.startHour;
+  const legacyEnd = currentShiftType.workEndHour ?? endHour;
+  
+  const displayWorkStart = currentShiftType.workStartTime ?? `${legacyStart.toString().padStart(2, '0')}:00`;
+  const displayWorkEnd = currentShiftType.workEndTime ?? `${legacyEnd.toString().padStart(2, '0')}:00`;
   
   // Format display date
   const displayDate = format(parseISO(dateStr), "yyyy年M月d日(E)", { locale: ja });
@@ -102,7 +105,7 @@ function HomeContent() {
             </div>
             <p className="text-sm font-medium text-slate-400 mt-1 flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
-              {currentShiftType.name}: {workStartHour.toString().padStart(2, '0')}:00 - {workEndHour.toString().padStart(2, '0')}:00
+              {currentShiftType.name}: {displayWorkStart} - {displayWorkEnd}
             </p>
           </div>
           <div className="flex items-center gap-2">

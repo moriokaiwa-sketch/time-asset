@@ -104,27 +104,21 @@ export function SettingsModal({
                     <div className="pt-2 border-t border-slate-100 flex gap-2">
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">勤務開始</label>
-                        <select 
-                          value={shift.workStartHour ?? shift.startHour}
-                          onChange={(e) => onUpdateShiftType(shift.id, { workStartHour: Number(e.target.value) })}
-                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
-                        >
-                          {Array.from({ length: 24 }).map((_, i) => (
-                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
-                          ))}
-                        </select>
+                        <input
+                          type="time"
+                          value={shift.workStartTime ?? (shift.workStartHour != null ? `${shift.workStartHour.toString().padStart(2, '0')}:00` : `${shift.startHour.toString().padStart(2, '0')}:00`)}
+                          onChange={(e) => onUpdateShiftType(shift.id, { workStartTime: e.target.value })}
+                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
                       </div>
                       <div className="flex-1">
                         <label className="block text-xs font-bold text-slate-500 mb-1">勤務終了</label>
-                        <select 
-                          value={shift.workEndHour ?? (shift.startHour + shift.duration) % 24}
-                          onChange={(e) => onUpdateShiftType(shift.id, { workEndHour: Number(e.target.value) })}
-                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500"
-                        >
-                          {Array.from({ length: 24 }).map((_, i) => (
-                            <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
-                          ))}
-                        </select>
+                        <input
+                          type="time"
+                          value={shift.workEndTime ?? (shift.workEndHour != null ? `${shift.workEndHour.toString().padStart(2, '0')}:00` : `${((shift.startHour + shift.duration) % 24).toString().padStart(2, '0')}:00`)}
+                          onChange={(e) => onUpdateShiftType(shift.id, { workEndTime: e.target.value })}
+                          className="w-full p-2 bg-slate-100 border-none rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
                       </div>
                     </div>
                   </div>

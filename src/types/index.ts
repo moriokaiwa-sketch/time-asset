@@ -31,8 +31,10 @@ export interface ShiftType {
   color: string;
   startHour: number;
   duration: number;
-  workStartHour?: number;
-  workEndHour?: number;
+  workStartHour?: number; // legacy
+  workEndHour?: number; // legacy
+  workStartTime?: string; // e.g. "09:00"
+  workEndTime?: string; // e.g. "18:00"
 }
 
 export interface DayData {
@@ -47,11 +49,11 @@ export interface GlobalSettings {
 }
 
 export const DEFAULT_SHIFT_TYPES: ShiftType[] = [
-  { id: "day", name: "日勤", color: "bg-orange-100 text-orange-700 border-orange-200", startHour: 9, duration: 12, workStartHour: 9, workEndHour: 18 },
-  { id: "late", name: "遅番", color: "bg-yellow-100 text-yellow-700 border-yellow-200", startHour: 12, duration: 12, workStartHour: 12, workEndHour: 21 },
-  { id: "night", name: "夜勤", color: "bg-indigo-100 text-indigo-700 border-indigo-200", startHour: 21, duration: 12, workStartHour: 21, workEndHour: 9 },
-  { id: "post-night", name: "明け", color: "bg-teal-100 text-teal-700 border-teal-200", startHour: 9, duration: 24, workStartHour: 9, workEndHour: 9 },
-  { id: "off", name: "休", color: "bg-slate-100 text-slate-700 border-slate-200", startHour: 9, duration: 24, workStartHour: 9, workEndHour: 9 },
+  { id: "day", name: "日勤", color: "bg-orange-100 text-orange-700 border-orange-200", startHour: 9, duration: 12, workStartTime: "09:00", workEndTime: "18:00" },
+  { id: "late", name: "遅番", color: "bg-yellow-100 text-yellow-700 border-yellow-200", startHour: 12, duration: 12, workStartTime: "12:00", workEndTime: "21:00" },
+  { id: "night", name: "夜勤", color: "bg-indigo-100 text-indigo-700 border-indigo-200", startHour: 21, duration: 12, workStartTime: "21:00", workEndTime: "09:00" },
+  { id: "post-night", name: "明け", color: "bg-teal-100 text-teal-700 border-teal-200", startHour: 9, duration: 24, workStartTime: "09:00", workEndTime: "09:00" },
+  { id: "off", name: "休", color: "bg-slate-100 text-slate-700 border-slate-200", startHour: 9, duration: 24, workStartTime: "09:00", workEndTime: "09:00" },
 ];
 
 export const DEFAULT_CATEGORIES: Category[] = [
