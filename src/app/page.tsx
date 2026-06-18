@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import { Timeline } from "@/components/Timeline";
-import { Clock, Calendar as CalendarIcon, Settings, Rows4, ZoomIn, LogIn, LogOut, CalendarDays } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Settings, Rows4, ZoomIn, LogIn, LogOut, CalendarDays, PieChart } from "lucide-react";
 import { useTimeBlocks } from "@/hooks/useTimeBlocks";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { TimeBlock, ShiftConfig } from "@/types";
@@ -103,6 +103,13 @@ function HomeContent() {
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button 
+              onClick={() => router.push(`/analysis?date=${dateStr}`)}
+              className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center gap-1.5 px-4 font-bold text-sm"
+            >
+              <PieChart className="w-5 h-5" />
+              <span className="hidden sm:inline">アナリシス</span>
+            </button>
             <button 
               onClick={() => router.push('/calendar')}
               className="p-2.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95 flex items-center justify-center gap-1.5 px-4 font-bold text-sm"

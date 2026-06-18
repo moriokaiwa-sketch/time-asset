@@ -46,8 +46,8 @@ export default function CalendarPage() {
     const dateStr = format(date, "yyyy-MM-dd");
 
     if (!stampShiftId) {
-      // Normal mode: navigate to timeline
-      router.push(`/?date=${dateStr}`);
+      // Normal mode: navigate to analysis screen
+      router.push(`/analysis?date=${dateStr}`);
       return;
     }
 
