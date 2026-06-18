@@ -133,7 +133,6 @@ export default function AnalysisClient() {
           </div>
         ) : (
           <>
-          <>
             {/* Custom CSS Donut Chart */}
             <div className="relative w-56 h-56 mx-auto mb-10 mt-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.07)]">
               <div 
