@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Trash2, Clock, Copy } from "lucide-react";
+import { X, Trash2, Clock, Copy, ChevronRight } from "lucide-react";
 import { TimeBlock, ShiftConfig, Category, TimeBlockType } from "@/types";
+import { CategorySelectModal } from "./CategorySelectModal";
 
 interface BlockModalProps {
   isOpen: boolean;
@@ -21,6 +22,8 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
   const [categoryId, setCategoryId] = useState("");
+  const [childCategoryId, setChildCategoryId] = useState<string | undefined>(undefined);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   
   const [startHourInput, setStartHourInput] = useState(shiftConfig.startHour);
   const [startMinuteInput, setStartMinuteInput] = useState(0);
@@ -34,6 +37,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setTitle(editingBlock.title);
       setType(editingBlock.type);
       setCategoryId(editingBlock.categoryId || categories[0]?.id || "");
+      setChildCategoryId(editingBlock.childCategoryId);
       
       const absStartMins = shiftConfig.startHour * 60 + editingBlock.startOffset;
       const absStartH = Math.floor(absStartMins / 60);
@@ -50,6 +54,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setTitle("");
       setType(initialType);
       setCategoryId(categories[0]?.id || "");
+      setChildCategoryId(undefined);
       setDurationHours(1);
       setDurationMinutes(0);
     } else {
@@ -58,6 +63,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setTitle("");
       setType(initialType);
       setCategoryId(categories[0]?.id || "");
+      setChildCategoryId(undefined);
       setDurationHours(1);
       setDurationMinutes(0);
     }
@@ -148,7 +154,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     
     const duration = durationHours * 60 + durationMinutes;
 
-    const blockData = { title, categoryId, startOffset, duration, type };
+    const blockData = { title, categoryId, childCategoryId, startOffset, duration, type };
 
     if (editingBlock && onUpdate) {
       onUpdate(editingBlock.id, blockData);
@@ -168,7 +174,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     const startOffset = hourDiff * 60 + startMinuteInput;
     const duration = durationHours * 60 + durationMinutes;
 
-    onAdd({ title, categoryId, startOffset, duration, type });
+    onAdd({ title, categoryId, childCategoryId, startOffset, duration, type });
     onClose();
   };
 
@@ -382,15 +388,28 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
             {/* Category */}
             <div className="space-y-1.5">
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">カテゴリ</label>
-              <select 
-                value={categoryId} 
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="w-full flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors active:scale-[0.98]"
               >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const selectedCat = categories.find(c => c.id === categoryId);
+                    const selectedChild = selectedCat?.children?.find(c => c.id === childCategoryId);
+                    return (
+                      <>
+                        <div className="w-3.5 h-3.5 rounded-full border border-black/5 shrink-0" style={{ backgroundColor: selectedCat?.color || "#e2e8f0" }} />
+                        <span className="font-bold text-slate-800 text-[14px]">
+                          {selectedCat ? selectedCat.name : "未選択"}
+                          {selectedChild ? <span className="text-slate-400 font-medium ml-1.5">/ {selectedChild.name}</span> : ""}
+                        </span>
+                      </>
+                    );
+                  })()}
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
             </div>
 
             {/* Title / Details */}
@@ -436,6 +455,16 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
           )}
         </div>
       </div>
+      
+      <CategorySelectModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        categories={categories}
+        onSelect={(parentId, childId) => {
+          setCategoryId(parentId);
+          setChildCategoryId(childId);
+        }}
+      />
     </div>
   );
 }

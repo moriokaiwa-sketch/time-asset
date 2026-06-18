@@ -1,15 +1,22 @@
 export type TimeBlockType = "plan" | "actual";
 
+export interface ChildCategory {
+  id: string;
+  name: string;
+}
+
 export interface Category {
   id: string;
   name: string;
   color: string;
+  children?: ChildCategory[];
 }
 
 export interface TimeBlock {
   id: string;
   title: string;
   categoryId?: string; 
+  childCategoryId?: string;
   category?: string; 
   startOffset: number; // minutes from shift start
   duration: number; // minutes

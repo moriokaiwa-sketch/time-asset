@@ -37,6 +37,7 @@ interface SettingsModalProps {
   onAddCategory: (category: Omit<Category, "id">) => void;
   onUpdateCategory: (id: string, updates: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
+  onReorderCategories: (categories: Category[]) => void;
   shiftTypes: ShiftType[];
   onAddShiftType: (shiftType: Omit<ShiftType, "id">) => void;
   onUpdateShiftType: (id: string, updates: Partial<ShiftType>) => void;
@@ -50,6 +51,7 @@ export function SettingsModal({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  onReorderCategories,
   shiftTypes,
   onAddShiftType,
   onUpdateShiftType,
@@ -59,6 +61,28 @@ export function SettingsModal({
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [activeColorPickerId, setActiveColorPickerId] = useState<string | null>(null);
   const [activeShiftColorPickerId, setActiveShiftColorPickerId] = useState<string | null>(null);
+
+  const moveCategory = (index: number, direction: 'up' | 'down') => {
+    const newCategories = [...categories];
+    if (direction === 'up' && index > 0) {
+      [newCategories[index - 1], newCategories[index]] = [newCategories[index], newCategories[index - 1]];
+    } else if (direction === 'down' && index < newCategories.length - 1) {
+      [newCategories[index + 1], newCategories[index]] = [newCategories[index], newCategories[index + 1]];
+    }
+    onReorderCategories(newCategories);
+  };
+
+  const moveChildCategory = (parentId: string, childIndex: number, direction: 'up' | 'down') => {
+    const parent = categories.find(c => c.id === parentId);
+    if (!parent || !parent.children) return;
+    const newChildren = [...parent.children];
+    if (direction === 'up' && childIndex > 0) {
+      [newChildren[childIndex - 1], newChildren[childIndex]] = [newChildren[childIndex], newChildren[childIndex - 1]];
+    } else if (direction === 'down' && childIndex < newChildren.length - 1) {
+      [newChildren[childIndex + 1], newChildren[childIndex]] = [newChildren[childIndex], newChildren[childIndex + 1]];
+    }
+    onUpdateCategory(parentId, { children: newChildren });
+  };
 
   if (!isOpen) return null;
 
@@ -227,10 +251,28 @@ export function SettingsModal({
               
               {isCategoryOpen && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="space-y-2">
-                {categories.map(cat => (
-                  <div key={cat.id} className="p-2 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
+                  <div className="space-y-3">
+                {categories.map((cat, index) => (
+                  <div key={cat.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                     <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-0.5 mr-1">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => moveCategory(index, 'up')}
+                          className="text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 p-0.5"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === categories.length - 1}
+                          onClick={() => moveCategory(index, 'down')}
+                          className="text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 p-0.5"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                      </div>
                       <button 
                         type="button"
                         onClick={(e) => {
@@ -251,7 +293,7 @@ export function SettingsModal({
                       <button 
                         type="button" 
                         onClick={() => onDeleteCategory(cat.id)}
-                        className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -272,6 +314,64 @@ export function SettingsModal({
                         ))}
                       </div>
                     )}
+                    {/* 子カテゴリ */}
+                    <div className="pl-14 pr-2 space-y-2">
+                      {(cat.children || []).map((child, childIndex) => (
+                        <div key={child.id} className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full border-2" style={{ borderColor: cat.color }} />
+                          <input 
+                            type="text"
+                            value={child.name}
+                            onChange={(e) => {
+                              const newChildren = [...(cat.children || [])];
+                              newChildren[childIndex] = { ...child, name: e.target.value };
+                              onUpdateCategory(cat.id, { children: newChildren });
+                            }}
+                            className="flex-1 p-1.5 bg-white border border-slate-200 rounded-md text-xs font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            placeholder="子カテゴリ名"
+                          />
+                          <div className="flex flex-col gap-0 shrink-0">
+                            <button
+                              type="button"
+                              disabled={childIndex === 0}
+                              onClick={() => moveChildCategory(cat.id, childIndex, 'up')}
+                              className="text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 px-1"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={childIndex === (cat.children?.length || 0) - 1}
+                              onClick={() => moveChildCategory(cat.id, childIndex, 'down')}
+                              className="text-slate-400 hover:text-slate-700 disabled:opacity-30 disabled:hover:text-slate-400 px-1"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              const newChildren = (cat.children || []).filter(c => c.id !== child.id);
+                              onUpdateCategory(cat.id, { children: newChildren });
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-red-500 rounded-md transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const newChild = { id: crypto.randomUUID(), name: "新しい子カテゴリ" };
+                          onUpdateCategory(cat.id, { children: [...(cat.children || []), newChild] });
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 py-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        子カテゴリを追加
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -282,7 +382,7 @@ export function SettingsModal({
                 className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-200 rounded-xl text-sm font-bold text-slate-500 hover:border-slate-300 hover:text-slate-700 hover:bg-slate-50 transition-colors active:scale-[0.98]"
               >
                 <Plus className="w-4 h-4" />
-                カテゴリを追加
+                親カテゴリを追加
               </button>
               </div>
               )}

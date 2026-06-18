@@ -27,6 +27,7 @@ function HomeContent() {
     addCategory,
     updateCategory,
     removeCategory,
+    reorderCategories,
     addShiftType,
     updateShiftType,
     removeShiftType
@@ -217,6 +218,7 @@ function HomeContent() {
         onAddCategory={addCategory}
         onUpdateCategory={updateCategory}
         onDeleteCategory={removeCategory}
+        onReorderCategories={reorderCategories}
       />
     </main>
   );

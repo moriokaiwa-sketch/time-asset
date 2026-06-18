@@ -130,6 +130,11 @@ export function useGlobalSettings() {
     saveSettings(newCategories, shiftTypes);
   };
 
+  const reorderCategories = (newCategories: Category[]) => {
+    setCategories(newCategories);
+    saveSettings(newCategories, shiftTypes);
+  };
+
   const addShiftType = (shiftType: Omit<ShiftType, "id">) => {
     const newShiftType = { ...shiftType, id: crypto.randomUUID() };
     const newShiftTypes = [...shiftTypes, newShiftType];
@@ -156,6 +161,7 @@ export function useGlobalSettings() {
     addCategory,
     updateCategory,
     removeCategory,
+    reorderCategories,
     addShiftType,
     updateShiftType,
     removeShiftType,

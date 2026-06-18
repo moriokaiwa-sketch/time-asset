@@ -432,7 +432,15 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
                   "flex-1 p-2 sm:p-3 overflow-hidden transition-opacity duration-200", 
                   currentDuration <= 15 || isOverviewMode ? "opacity-0" : "opacity-100"
                 )}>
-                  <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight truncate">{event.title}</div>
+                  <div className="text-sm font-bold tracking-tight mb-0.5 leading-tight truncate">
+                    {(() => {
+                      const cat = categories.find(c => c.id === event.categoryId);
+                      const child = cat?.children?.find(c => c.id === event.childCategoryId);
+                      const catText = child ? `${cat?.name} - ${child.name}` : (cat ? cat.name : "");
+                      if (catText && event.title) return `${catText} / ${event.title}`;
+                      return catText || event.title;
+                    })()}
+                  </div>
                   <div className="text-xs font-medium opacity-70 truncate">
                     {Math.floor(event.duration / 60)}h {event.duration % 60 > 0 ? `${event.duration % 60}m` : ''}
                   </div>
