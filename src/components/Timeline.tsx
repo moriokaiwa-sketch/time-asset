@@ -238,16 +238,37 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   
   const totalOffsetHours = hoursOffset + (currentMinute / 60);
 
+  useEffect(() => {
+    if (!isOverviewMode) {
+      const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }); // YYYY-MM-DD
+      if (dateStr !== todayStr) return; // Only auto-scroll on today's timeline
+
+      const timer = setTimeout(() => {
+        if (containerRef.current) {
+          const topOffset = 16 + totalOffsetHours * PIXELS_PER_HOUR; // 1rem is 16px
+          const containerTop = containerRef.current.getBoundingClientRect().top + window.scrollY;
+          const targetY = containerTop + topOffset - (window.innerHeight / 2);
+          window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+        }
+      }, 350); // 300ms is the duration of height transition
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOverviewMode]);
+
   if (totalOffsetHours <= duration) {
-    currentTimeIndicator = (
-      <div 
-        className="absolute left-0 right-0 flex items-center z-30 pointer-events-none"
-        style={{ top: `calc(1rem + ${totalOffsetHours * PIXELS_PER_HOUR}px)` }}
-      >
-        <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-        <div className="h-[1px] flex-1 bg-blue-500/60" />
-      </div>
-    );
+    const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+    if (dateStr === todayStr) {
+      currentTimeIndicator = (
+        <div 
+          className="absolute left-0 right-0 flex items-center z-30 pointer-events-none"
+          style={{ top: `calc(1rem + ${totalOffsetHours * PIXELS_PER_HOUR}px)` }}
+        >
+          <div className="w-2 h-2 rounded-full bg-blue-500 -ml-1 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+          <div className="h-[1px] flex-1 bg-blue-500/60" />
+        </div>
+      );
+    }
   }
 
   return (
