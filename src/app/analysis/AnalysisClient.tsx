@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO, addDays, subDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, PieChart as PieChartIcon, AlignLeft } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 
 import { useTimeBlocks } from "@/hooks/useTimeBlocks";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
@@ -134,34 +133,30 @@ export default function AnalysisClient() {
           </div>
         ) : (
           <>
-            {/* Donut Chart */}
-            <div className="w-full h-72 mb-8 relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={110}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip 
-                    formatter={(value: any) => formatDuration(Number(value))}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', fontWeight: 'bold' }}
-                    itemStyle={{ color: '#0f172a' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
-                <span className="text-xl font-extrabold text-slate-800">{formatDuration(totalActualMinutes)}</span>
+          <>
+            {/* Custom CSS Donut Chart */}
+            <div className="relative w-56 h-56 mx-auto mb-10 mt-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.07)]">
+              <div 
+                className="w-full h-full rounded-full" 
+                style={{ 
+                  background: chartData.length > 0 
+                    ? `conic-gradient(${
+                        (() => {
+                          let cumulative = 0;
+                          return chartData.map(item => {
+                            const pct = (item.value / totalActualMinutes) * 100;
+                            const stop = `${item.color} ${cumulative}% ${cumulative + pct}%`;
+                            cumulative += pct;
+                            return stop;
+                          }).join(', ')
+                        })()
+                      })` 
+                    : '#cbd5e1' 
+                }}
+              />
+              <div className="absolute inset-0 m-auto w-[68%] h-[68%] bg-slate-50 rounded-full shadow-[inset_0_2px_10px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total</span>
+                <span className="text-2xl font-extrabold text-slate-800">{formatDuration(totalActualMinutes)}</span>
               </div>
             </div>
 
