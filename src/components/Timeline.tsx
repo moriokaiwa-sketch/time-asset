@@ -62,7 +62,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
 
   const PIXELS_PER_HOUR = isOverviewMode && containerHeight > 0 
     ? Math.max(containerHeight / duration, 20) 
-    : 80;
+    : 120;
   const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / 60;
   const SNAP_MINUTES = 15;
 
