@@ -240,7 +240,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
 
   useEffect(() => {
     if (!isOverviewMode) {
-      const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }); // YYYY-MM-DD
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       if (dateStr !== todayStr) return; // Only auto-scroll on today's timeline
 
       const timer = setTimeout(() => {
@@ -257,7 +257,7 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
   }, [isOverviewMode]);
 
   if (totalOffsetHours <= duration) {
-    const todayStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     if (dateStr === todayStr) {
       currentTimeIndicator = (
         <div 
