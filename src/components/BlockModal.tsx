@@ -301,8 +301,8 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     onChange={(e) => setStartMinuteInput(Number(e.target.value))}
                     className="w-[30%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
                   >
-                    {Array.from({ length: 60 }).map((_, i) => (
-                      <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <option key={i * 5} value={(i * 5).toString().padStart(2, '0')}>{(i * 5).toString().padStart(2, '0')}分</option>
                     ))}
                   </select>
                 </div>
@@ -355,8 +355,8 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     onChange={(e) => handleEndChange(endHour, Number(e.target.value))}
                     className="w-[30%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
                   >
-                    {Array.from({ length: 60 }).map((_, i) => (
-                      <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}分</option>
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <option key={i * 5} value={(i * 5).toString().padStart(2, '0')}>{(i * 5).toString().padStart(2, '0')}分</option>
                     ))}
                   </select>
                 </div>
