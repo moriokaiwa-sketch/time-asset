@@ -254,32 +254,6 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
               </button>
             </div>
 
-            {/* Category */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">カテゴリ</label>
-              <select 
-                value={categoryId} 
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Title / Details */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">詳細</label>
-              <input 
-                type="text" 
-                placeholder="例: 会議、睡眠、休憩など"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base"
-              />
-            </div>
-
             {/* Time Settings Container */}
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/60 space-y-3.5">
               
@@ -404,6 +378,32 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                 </select>
               </div>
 
+            </div>
+
+            {/* Category */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">カテゴリ</label>
+              <select 
+                value={categoryId} 
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Title / Details */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">詳細</label>
+              <input 
+                type="text" 
+                placeholder="例: 会議、睡眠、休憩など"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-base"
+              />
             </div>
 
           </form>
