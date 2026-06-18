@@ -35,18 +35,18 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       setType(editingBlock.type);
       setCategoryId(editingBlock.categoryId || categories[0]?.id || "");
       
-      const absStartMins = Math.max(0, shiftConfig.startHour * 60 + editingBlock.startOffset);
+      const absStartMins = shiftConfig.startHour * 60 + editingBlock.startOffset;
       const absStartH = Math.floor(absStartMins / 60);
       setStartHourInput(absStartH);
-      setStartMinuteInput(absStartMins % 60);
+      setStartMinuteInput(((absStartMins % 60) + 60) % 60);
 
       setDurationHours(Math.floor(editingBlock.duration / 60));
       setDurationMinutes(editingBlock.duration % 60);
     } else if (initialStartOffset !== undefined) {
-      const absStartMins = Math.max(0, shiftConfig.startHour * 60 + initialStartOffset);
+      const absStartMins = shiftConfig.startHour * 60 + initialStartOffset;
       const absStartH = Math.floor(absStartMins / 60);
       setStartHourInput(absStartH);
-      setStartMinuteInput(absStartMins % 60);
+      setStartMinuteInput(((absStartMins % 60) + 60) % 60);
       setTitle("");
       setType(initialType);
       setCategoryId(categories[0]?.id || "");
@@ -144,8 +144,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let startOffset = (startHourInput * 60 + startMinuteInput) - (shiftConfig.startHour * 60);
-    if (startOffset < 0) startOffset = 0;
+    const startOffset = (startHourInput * 60 + startMinuteInput) - (shiftConfig.startHour * 60);
     
     const duration = durationHours * 60 + durationMinutes;
 
@@ -275,17 +274,17 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     value={Math.floor(startHourInput / 24) * 24}
                     onChange={(e) => {
                       const offset = Number(e.target.value);
-                      const displayHour = startHourInput % 24;
+                      const displayHour = ((startHourInput % 24) + 24) % 24;
                       setStartHourInput(offset + displayHour);
                     }}
                     className="w-[35%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
                   >
+                    <option value={-24}>前日</option>
                     <option value={0}>当日</option>
                     <option value={24}>翌日</option>
-                    <option value={48}>翌々日</option>
                   </select>
                   <select
-                    value={(startHourInput % 24).toString().padStart(2, '0')}
+                    value={(((startHourInput % 24) + 24) % 24).toString().padStart(2, '0')}
                     onChange={(e) => {
                       const displayHour = Number(e.target.value);
                       const offset = Math.floor(startHourInput / 24) * 24;
@@ -329,17 +328,17 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                     value={Math.floor(endHour / 24) * 24}
                     onChange={(e) => {
                       const offset = Number(e.target.value);
-                      const displayHour = endHour % 24;
+                      const displayHour = ((endHour % 24) + 24) % 24;
                       handleEndChange(offset + displayHour, endMinute);
                     }}
                     className="w-[35%] p-2.5 bg-white border border-slate-200 shadow-sm rounded-xl font-bold text-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-center"
                   >
+                    <option value={-24}>前日</option>
                     <option value={0}>当日</option>
                     <option value={24}>翌日</option>
-                    <option value={48}>翌々日</option>
                   </select>
                   <select
-                    value={(endHour % 24).toString().padStart(2, '0')}
+                    value={(((endHour % 24) + 24) % 24).toString().padStart(2, '0')}
                     onChange={(e) => {
                       const displayHour = Number(e.target.value);
                       const offset = Math.floor(endHour / 24) * 24;
