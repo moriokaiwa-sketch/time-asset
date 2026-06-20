@@ -172,11 +172,7 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
   const handleCopy = () => {
     if (!editingBlock) return;
 
-    let hourDiff = startHourInput - shiftConfig.startHour;
-    if (hourDiff < 0) {
-      hourDiff += 24;
-    }
-    const startOffset = hourDiff * 60 + startMinuteInput;
+    const startOffset = (startHourInput * 60 + startMinuteInput) - (shiftConfig.startHour * 60);
     const duration = durationHours * 60 + durationMinutes;
 
     onAdd({ title, categoryId, childCategoryId, startOffset, duration, type });
@@ -455,9 +451,12 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
             <button
               type="button"
               onClick={handleCopy}
-              className="p-2.5 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-colors active:scale-[0.98] shrink-0 flex items-center justify-center"
+              className="px-4 py-2.5 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-colors active:scale-[0.98] shrink-0 flex items-center justify-center gap-1.5"
             >
-              <Copy className="w-5 h-5" />
+              <Copy className="w-4 h-4" />
+              <span className="text-[13px] whitespace-nowrap">
+                {type === "actual" ? "実績へコピー" : "計画へコピー"}
+              </span>
             </button>
           )}
         </div>
