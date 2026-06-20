@@ -451,7 +451,11 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
             <button
               type="button"
               onClick={handleCopy}
-              className="px-4 py-2.5 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-100 transition-colors active:scale-[0.98] shrink-0 flex items-center justify-center gap-1.5"
+              className={`px-4 py-2.5 rounded-xl font-bold transition-colors active:scale-[0.98] shrink-0 flex items-center justify-center gap-1.5 border ${
+                type === "actual" 
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" 
+                  : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+              }`}
             >
               <Copy className="w-4 h-4" />
               <span className="text-[13px] whitespace-nowrap">
