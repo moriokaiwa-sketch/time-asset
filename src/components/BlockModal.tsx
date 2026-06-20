@@ -16,9 +16,10 @@ interface BlockModalProps {
   onAdd: (block: Omit<TimeBlock, "id" | "column" | "totalColumns">) => void;
   onUpdate?: (id: string, updates: Partial<TimeBlock>) => void;
   onDelete?: (id: string) => void;
+  dateStr?: string;
 }
 
-export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialStartOffset, initialType = "plan", editingBlock, onAdd, onUpdate, onDelete }: BlockModalProps) {
+export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialStartOffset, initialType = "plan", editingBlock, onAdd, onUpdate, onDelete, dateStr }: BlockModalProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<TimeBlockType>("plan");
   const [categoryId, setCategoryId] = useState("");
@@ -116,10 +117,19 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       m = 0;
     }
     
-    // Calculate absolute hour based on shiftConfig.startHour
+    // Calculate absolute hour based on date difference
     let absH = h;
-    if (h < shiftConfig.startHour) {
-      absH += 24; // assume next day
+    if (dateStr) {
+      const targetDate = new Date(dateStr);
+      // Create a Date object for 'now' stripped to midnight in local time
+      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const targetDateLocal = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      const diffDays = Math.round((todayDate.getTime() - targetDateLocal.getTime()) / (1000 * 60 * 60 * 24));
+      absH += diffDays * 24;
+    } else {
+      if (h < shiftConfig.startHour) {
+        absH += 24; // fallback
+      }
     }
     
     setStartHourInput(absH);
@@ -138,10 +148,18 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
       m = 0;
     }
     
-    // Calculate absolute hour based on startHourInput
+    // Calculate absolute hour based on date difference
     let absH = h;
-    if (h < startHourInput % 24 || h < shiftConfig.startHour) {
-      absH += 24;
+    if (dateStr) {
+      const targetDate = new Date(dateStr);
+      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const targetDateLocal = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+      const diffDays = Math.round((todayDate.getTime() - targetDateLocal.getTime()) / (1000 * 60 * 60 * 24));
+      absH += diffDays * 24;
+    } else {
+      if (h < startHourInput % 24 || h < shiftConfig.startHour) {
+        absH += 24; // fallback
+      }
     }
     
     handleEndChange(absH, m);

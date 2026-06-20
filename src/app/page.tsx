@@ -206,6 +206,7 @@ function HomeContent() {
         onAdd={addBlock}
         onUpdate={updateBlock}
         onDelete={removeBlock}
+        dateStr={dateStr}
       />
       <SettingsModal 
         isOpen={isSettingsModalOpen}
