@@ -231,7 +231,12 @@ export function Timeline({ startHour, duration, events = [], categories = [], ac
 
   let currentTimeIndicator = null;
   const [year, month, day] = dateStr ? dateStr.split('-').map(Number) : [now.getFullYear(), now.getMonth() + 1, now.getDate()];
-  const timelineStart = new Date(year, month - 1, day, startHour, 0, 0, 0);
+  
+  // If the shift starts late (e.g. 21:00), the 'main' day of the shift is the next day.
+  // So the timeline for `dateStr` actually starts on `dateStr - 1`.
+  const shiftStartDay = startHour >= 12 ? day - 1 : day;
+  const timelineStart = new Date(year, month - 1, shiftStartDay, startHour, 0, 0, 0);
+  
   const diffMs = now.getTime() - timelineStart.getTime();
   const totalOffsetHours = diffMs / (1000 * 60 * 60);
 

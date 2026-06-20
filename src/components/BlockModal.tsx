@@ -118,19 +118,12 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     }
     
     // Calculate absolute hour based on date difference
-    let absH = h;
-    if (dateStr) {
-      const targetDate = new Date(dateStr);
-      // Create a Date object for 'now' stripped to midnight in local time
-      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const targetDateLocal = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-      const diffDays = Math.round((todayDate.getTime() - targetDateLocal.getTime()) / (1000 * 60 * 60 * 24));
-      absH += diffDays * 24;
-    } else {
-      if (h < shiftConfig.startHour) {
-        absH += 24; // fallback
-      }
-    }
+    const [year, month, day] = dateStr ? dateStr.split('-').map(Number) : [now.getFullYear(), now.getMonth() + 1, now.getDate()];
+    const shiftStartDay = shiftConfig.startHour >= 12 ? day - 1 : day;
+    const timelineStart = new Date(year, month - 1, shiftStartDay, shiftConfig.startHour, 0, 0, 0);
+    const diffMs = now.getTime() - timelineStart.getTime();
+    const totalOffsetHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const absH = totalOffsetHours + shiftConfig.startHour;
     
     setStartHourInput(absH);
     setStartMinuteInput(m);
@@ -149,18 +142,12 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
     }
     
     // Calculate absolute hour based on date difference
-    let absH = h;
-    if (dateStr) {
-      const targetDate = new Date(dateStr);
-      const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const targetDateLocal = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
-      const diffDays = Math.round((todayDate.getTime() - targetDateLocal.getTime()) / (1000 * 60 * 60 * 24));
-      absH += diffDays * 24;
-    } else {
-      if (h < startHourInput % 24 || h < shiftConfig.startHour) {
-        absH += 24; // fallback
-      }
-    }
+    const [year, month, day] = dateStr ? dateStr.split('-').map(Number) : [now.getFullYear(), now.getMonth() + 1, now.getDate()];
+    const shiftStartDay = shiftConfig.startHour >= 12 ? day - 1 : day;
+    const timelineStart = new Date(year, month - 1, shiftStartDay, shiftConfig.startHour, 0, 0, 0);
+    const diffMs = now.getTime() - timelineStart.getTime();
+    const totalOffsetHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const absH = totalOffsetHours + shiftConfig.startHour;
     
     handleEndChange(absH, m);
   };
@@ -295,9 +282,10 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                 </div>
                 <div className="flex w-full gap-1">
                   <select
-                    value={Math.floor(startHourInput / 24) * 24}
+                    value={Math.floor(startHourInput / 24) * 24 - (shiftConfig.startHour >= 12 ? 24 : 0)}
                     onChange={(e) => {
-                      const offset = Number(e.target.value);
+                      let offset = Number(e.target.value);
+                      if (shiftConfig.startHour >= 12) offset += 24;
                       const displayHour = ((startHourInput % 24) + 24) % 24;
                       setStartHourInput(offset + displayHour);
                     }}
@@ -349,9 +337,10 @@ export function BlockModal({ isOpen, onClose, shiftConfig, categories, initialSt
                 </div>
                 <div className="flex w-full gap-1">
                   <select
-                    value={Math.floor(endHour / 24) * 24}
+                    value={Math.floor(endHour / 24) * 24 - (shiftConfig.startHour >= 12 ? 24 : 0)}
                     onChange={(e) => {
-                      const offset = Number(e.target.value);
+                      let offset = Number(e.target.value);
+                      if (shiftConfig.startHour >= 12) offset += 24;
                       const displayHour = ((endHour % 24) + 24) % 24;
                       handleEndChange(offset + displayHour, endMinute);
                     }}
